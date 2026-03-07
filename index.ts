@@ -1,0 +1,48 @@
+import express,{Request,Response} from "express";
+import { connectDB } from "./Config/DBConnect";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import userRoute from "./Modules/User/Routes/User";
+import authRoute from "./Modules/User/Auth/Routes/Auth";
+import categoryRoute from "./Modules/Category/Routes/Category";
+import ProductsRoute from "./Modules/Products/Routes/Products"
+import { errorHandler, notFound } from './middlewares/err';
+import cors from "cors";
+dotenv.config();
+
+
+connectDB();
+const app=express();
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
+
+app.get("/",(req:Request,res:Response)=>{
+    res.send("hello world");
+});
+app.use("/api/users",userRoute);
+app.use("/api/users/auth",authRoute);
+app.use("/api/categories",categoryRoute);
+app.use("/api/products",ProductsRoute);
+
+//error handling middleware
+app.use(notFound);
+app.use(errorHandler);
+
+
+
+
+const PORT=process.env.PORT || 5000;
+
+app.listen(PORT,()=>{
+    console.log(`server is running on port ${PORT}`);
+});
+
+
