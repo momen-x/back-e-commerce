@@ -12,23 +12,6 @@ import jwt from "jsonwebtoken";
 
 dotenv.config();
 
-
-const getUserId=(req:Request) :string |null=>{
-      const authToken = req.cookies.token;
-    if (!authToken) {
-     return null;
-    }
-    const decoded = jwt.verify(
-      authToken as string,
-      process.env.JWT_SECRET_KEY as string,
-    );
-    if (!decoded) {
-      return null;
-    }
-    const id = (decoded as any)._id;
-    return id;
-}
-
 /**
  * route get /api/users
  * desc get all users (admin only)
@@ -55,19 +38,32 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   return;
 });
 
+/**
+ * @method GET
+ * @route /api/users/me
+ * @description return user data
+ * @access private just by user himself
+ */
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+  const decoded = (req as any).user; // set by VerifyToken middleware
+
+  const user = await User.findById(decoded.id).select("-password");
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+  res.status(200).json(user);
+});
+
 /*
- *route PUT /api/users/:id
+ *route PUT /api/users
  *desc update user info
  *access private (user can update only his info and admin can update any user info)
  */
 export const updateUserInfo = asyncHandler(
   async (req: Request, res: Response) => {
-  const id= getUserId(req);
-   if(!id){
-    res.status(401).json({ error: "you are not authenticated" });
-    return;
-   }
-
+    const decoded = (req as any).user; // set by VerifyToken middleware
+    const id = decoded.id;
     const validation = updateUserInfoValidation.safeParse(req.body);
 
     if (!validation.success) {
@@ -91,25 +87,27 @@ export const updateUserInfo = asyncHandler(
 );
 
 /**
- *@route /api/users/change-password
- *@Method POST
+ *@route /api/users/password/change-password
+ *@Method PUT
  *@description change the user password
  *@access private the user logged in
  */
 export const changePassword = asyncHandler(
   async (req: Request, res: Response) => {
+    const decoded = (req as any).user; // set by VerifyToken middleware
+    const id = decoded.id;
+    if (!id) {
+      res.status(403).json("the id not provided");
+      return;
+    }
+
     const validation = updatePasswordValidation.safeParse(req.body);
     if (!validation.success) {
       res.status(400).json({ error: validation.error.issues[0].message });
       return;
     }
-console.log("the data is : ",validation.data);
     const { oldPassword, newPassword } = validation.data;
-   const id= getUserId(req);
-   if(!id){
-    res.status(401).json({ error: "you are not authenticated" });
-    return;
-   }
+
     const user = await User.findById(id);
     if (!user) {
       res.status(404).json({ error: "user not found" });

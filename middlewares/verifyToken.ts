@@ -11,8 +11,6 @@ export const VeriFyToken=(req:Request,res:Response,next:NextFunction)=>{
         return;
     }
     try {
-      // console.log("cookies: ", req.cookies);
-        // const token = authToken?.split(" ")[1];
         const decoded = jwt.verify(authToken as string, process.env.JWT_SECRET_KEY as string);
         (req as any).user = decoded;
         next();

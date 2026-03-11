@@ -91,11 +91,6 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   //to do save the token in the header
   res.status(200).json({
     message: "login successful",
-    user: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      id: user._id,
-    },
   });
   return;
 });

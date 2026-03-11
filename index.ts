@@ -6,6 +6,8 @@ import userRoute from "./Modules/User/Routes/User";
 import authRoute from "./Modules/User/Auth/Routes/Auth";
 import categoryRoute from "./Modules/Category/Routes/Category";
 import ProductsRoute from "./Modules/Products/Routes/Products"
+import OrderItemRoute from "./Modules/Order_Items/Routes/Order_items"
+import OrderRoute from "./Modules/Order/Routes/Order"
 import { errorHandler, notFound } from './middlewares/err';
 import cors from "cors";
 dotenv.config();
@@ -30,7 +32,9 @@ app.get("/",(req:Request,res:Response)=>{
 app.use("/api/users",userRoute);
 app.use("/api/users/auth",authRoute);
 app.use("/api/categories",categoryRoute);
+app.use("/api/order-items",OrderItemRoute);
 app.use("/api/products",ProductsRoute);
+app.use("/api/orders",OrderRoute);
 
 //error handling middleware
 app.use(notFound);

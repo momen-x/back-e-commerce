@@ -5,11 +5,11 @@ export const updatePasswordValidation = z  .object({
     newPassword: z
       .string()
       .min(8, "the new password must be at least 8 characters long"),
-    confirmPassword: z
+    confirmNewPassword: z
       .string()
       .min(8, "the confirm password must be at least 8 characters long"),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
