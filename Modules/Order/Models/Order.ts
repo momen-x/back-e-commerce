@@ -36,6 +36,10 @@ const orderSchema = new mongoose.Schema(
       required: true,
       minlength: 7,
     },
+    verifyCustomerEmail: {
+      type: Boolean,
+      default: false,
+    },
     totalPrice: {
       type: Number,
       required: true,
@@ -47,13 +51,12 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 orderSchema.virtual("totalItems").get(function () {
   return this.orderItemsId.reduce((total: number, item: any) => {
     return total + item.quantity;
   }, 0);
-
-})
+});
 
 export const Order = mongoose.model("Order", orderSchema);
