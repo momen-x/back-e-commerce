@@ -19,5 +19,5 @@ router.route("/last-order").get(VeriFyToken, getLastOrder);
 router
   .route("/:id")
   .get(verifyTokenAndAuthorization, getOrders)
-  .delete(verifyTokenAndAuthorization, deleteOrder);
+  .delete(VeriFyToken, deleteOrder);
 export default router;

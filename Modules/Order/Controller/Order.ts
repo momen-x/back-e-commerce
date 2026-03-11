@@ -45,7 +45,20 @@ export const getOrderById = asyncHandler(
 export const getLastOrder = asyncHandler(async (req, res) => {
   const decoded = (req as any).user; // set by VerifyToken middleware
   const id = decoded.id;
-  const order = await Order.findOne({ user: id }).populate(["orderItemsId","user"]).sort({ createdAt: -1 });
+  if (!id) {
+    res.status(400).json({ message: "id is required" });
+    return;
+  }
+  const order = await Order.findOne({ user: id })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "orderItemsId",
+      populate: {
+        path: "product", // ← populate product inside each order item
+        model: "Product",
+      },
+    })
+    .populate("user");
   if (!order) {
     res.status(404).json({ message: "No orders found" });
     return;
@@ -100,6 +113,7 @@ export const deleteOrder = asyncHandler(async (req: Request, res: Response) => {
     res.status(404).json({ message: "order not found" });
     return;
   }
+  await OrderItem.deleteMany({ _id: { $in: order.orderItemsId } });
   await order.deleteOne();
   res.status(200).json({ message: "order deleted" });
 });
