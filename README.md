@@ -127,58 +127,59 @@ A robust, scalable, and secure RESTful API built with **Express.js**, **TypeScri
 ## 📁 Project Structure
 
 ecommerce-backend/
+ecommerce-backend/
 ├── src/
-│ ├── Modules/
-│ │ ├── Products/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ ├── Payment/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ ├── Categories/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ ├── Orders/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ ├── Order_Items/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ └── Users/
-│ │ ├── Auth/
-│ │ │ ├── Controllers/
-│ │ │ ├── Routes/
-│ │ │ ├── Validation/
-│ │ │ └── Models/
-│ │ │
-│ │ ├── Controllers/
-│ │ ├── Routes/
-│ │ ├── Validation/
-│ │ └── Models/
-│ │
-│ ├── config/
-│ ├── middleware/
-│ ├── utils/
-│ ├── constants/
-│ └── types/
+│   ├── Modules/
+│   │   ├── Products/
+│   │   │   ├── Controllers/
+│   │   │   ├── Routes/
+│   │   │   ├── Validation/
+│   │   │   └── Module/
+│   │   │
+│   │   ├── Payment/
+│   │   │   ├── Controllers/
+│   │   │   ├── Routes/
+│   │   │   ├── Validation/
+│   │   │   └── Module/
+│   │   │
+│   │   ├── Categories/
+│   │   │   ├── Controllers/
+│   │   │   ├── Routes/
+│   │   │   ├── Validation/
+│   │   │   └── Module/
+│   │   │
+│   │   ├── Orders/
+│   │   │   ├── Controllers/
+│   │   │   ├── Routes/
+│   │   │   ├── Validation/
+│   │   │   └── Module/
+│   │   │
+│   │   ├── Order_Items/
+│   │   │   ├── Controllers/
+│   │   │   ├── Routes/
+│   │   │   ├── Validation/
+│   │   │   └── Module/
+│   │   │
+│   │   └── Users/
+│   │       ├── Auth/
+│   │       │   ├── Controllers/
+│   │       │   ├── Routes/
+│   │       │   ├── Validation/
+│   │       │   └── Module/
+│   │       │
+│   │       ├── Controllers/
+│   │       ├── Routes/
+│   │       ├── Validation/
+│   │       └── Module/
+│   │
+│   ├── config/
+│   ├── middleware/
+│   ├── utils/
+│   ├── constants/
+│   └── types/
 │
 ├── prisma/
-│ └── schema.prisma
+│   └── schema.prisma
 │
 ├── index.ts
 ├── .env
