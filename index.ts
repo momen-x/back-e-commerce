@@ -8,6 +8,7 @@ import categoryRoute from "./Modules/Category/Routes/Category";
 import ProductsRoute from "./Modules/Products/Routes/Products"
 import OrderItemRoute from "./Modules/Order_Items/Routes/Order_items"
 import OrderRoute from "./Modules/Order/Routes/Order"
+import paymentRoute from "./Modules/Payment/Routes/Payment";
 import { errorHandler, notFound } from './middlewares/err';
 import cors from "cors";
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/categories",categoryRoute);
 app.use("/api/order-items",OrderItemRoute);
 app.use("/api/products",ProductsRoute);
 app.use("/api/orders",OrderRoute);
+app.use("/api/payment", paymentRoute);
 
 //error handling middleware
 app.use(notFound);
