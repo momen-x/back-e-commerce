@@ -3,6 +3,9 @@ import asyncHandler from "express-async-handler";
 import { Order } from "../Models/Order";
 import { OrderSchema } from "../Validations/Order";
 import { OrderItem } from "../../Order_Items/Models/Order_Item";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 /**
  *@method GET
@@ -11,6 +14,7 @@ import { OrderItem } from "../../Order_Items/Models/Order_Item";
  *@access private just the admin can get all orders
  */
 export const getOrders = asyncHandler(async (req: Request, res: Response) => {
+
   const orders = await Order.find().populate(["orderItemsId", "user"]);
   res.status(200).json(orders);
 });
@@ -68,6 +72,24 @@ export const getLastOrder = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @Method GET
+ * @route /api/orders/user-orders
+ * @description get the orders that the user paid
+ * @access private the user himself can see own orders
+ */
+export const getUserOrders = asyncHandler(async (req, res) => {
+  const { id } = (req as any).user;
+  if (!id) {
+    res.status(400).json({ message: "id is required" });
+    return;
+  }
+  const orders = await Order.find({ user: id, isPaid: true }).populate({
+    path: "orderItemsId",
+  });
+  res.status(200).json(orders);
+});
+
+/**
  * @method POST
  * @route /api/orders
  * @description add new order
@@ -81,12 +103,9 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
   }
   const { orderItemsId } = validation.data;
 
-  // Verify that all order items exist using the OrderItem model
-  // We use Promise.all to await all database queries concurrently
   const foundOrderItems = await Promise.all(
     orderItemsId.map(async (itemId) => await OrderItem.findById(itemId)),
   );
-
   // If any item in the array is null, it means it wasn't found
   if (foundOrderItems.includes(null)) {
     res.status(404).json({ message: "One or more order items not found" });
@@ -96,6 +115,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
   const order = await Order.create(validation.data);
   res.status(201).json(order);
 });
+
 /**
  * @method DELETE
  * @route /api/order/:id

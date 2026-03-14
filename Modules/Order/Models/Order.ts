@@ -36,10 +36,6 @@ const orderSchema = new mongoose.Schema(
       required: true,
       minlength: 7,
     },
-    verifyCustomerEmail: {
-      type: Boolean,
-      default: false,
-    },
     totalPrice: {
       type: Number,
       required: true,
@@ -50,6 +46,10 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+   verifyCustomerEmail:String,
+   VerificationCustomerExpires:Date,
+
+
   },
   { timestamps: true },
 );

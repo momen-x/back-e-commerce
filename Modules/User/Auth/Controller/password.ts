@@ -8,6 +8,7 @@ import {
   forgotPasswordValidation,
   resetPasswordValidation,
 } from "../Validations/PasswordValidation";
+import { sendVerificationResetPassword } from "../../../../Helper/sendVerificationResetPassword";
 
 dotenv.config();
 
@@ -36,13 +37,45 @@ export const forgotPassword = asyncHandler(
         password: user.password,
       },
       process.env.JWT_SECRET_KEY as string,
-      { expiresIn: "10m" }
+      { expiresIn: "10m" },
     );
-    const link = `${process.env.BASE_URL}/api/users/password/reset-password/${user._id}/${token}`;
-    //to do : send email to can the user verification the email
-    res.send("forgot password");
-  }
+
+    user.passwordResetToken = token;
+    user.passwordResetExpires = new Date(Date.now() + 1000 * 60 * 10);
+    await user.save();
+    await sendVerificationResetPassword(email, token, user._id as any);
+    res
+      .status(200)
+      .json({ message: "Verification email resent. Please check your inbox." });
+    return;
+  },
 );
+
+/**
+ * @method GET
+ * @route /api/users/auth/password/verify/:id/:token
+ * @description verify user email to reset his/her password
+ * @access Public
+ */
+export const verifyResetPasswordEmail = asyncHandler(async (req, res) => {
+  const { token, id } = req.params;
+  const user = await User.findOne({
+    _id: id,
+    passwordResetToken: token,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400).json({ error: "Invalid or expired token" });
+    return;
+  }
+
+  // user.passwordResetToken = undefined as any;
+  // user.passwordResetExpires = undefined as any;
+  await user.save();
+
+  res.status(200).json({ message: "Email verified successfully" });
+});
 
 /**
  * @route Post /api/users/auth/password/reset-password/:id/:token
@@ -67,7 +100,7 @@ export const resetPassword = asyncHandler(
     try {
       decoded = jwt.verify(
         token as string,
-        process.env.JWT_SECRET_KEY as string
+        process.env.JWT_SECRET_KEY as string,
       );
     } catch {
       res.status(400).json({ error: "invalid or expired token" });
@@ -93,8 +126,14 @@ export const resetPassword = asyncHandler(
     }
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
-    await User.findByIdAndUpdate(id, { password: hashedPassword });
-    res.send("reset password");
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined as any;
+    user.passwordResetExpires = undefined as any;
+    await user.save();
+    res.status(200).json({
+      message: "Email verified successfully",
+      canProceed: true, // ✅ Explicit flag
+    });
     return;
-  }
+  },
 );

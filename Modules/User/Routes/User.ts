@@ -20,9 +20,7 @@ router
   .route("/")
   .get(verifyAdmin, getAllUsers)
   .put(VeriFyToken, updateUserInfo);
-router
-  .route("/password/change-password")
-  .put(VeriFyToken, changePassword);
+router.route("/password/change-password").put(VeriFyToken, changePassword);
 router.route("/me").get(VeriFyToken, getMe);
 
 router

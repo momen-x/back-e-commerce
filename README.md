@@ -134,38 +134,42 @@ ecommerce-backend/
 │   │   │   ├── Controllers/
 │   │   │   ├── Routes/
 │   │   │   ├── Validation/
-│   │   │   └── Module/
+│   │   │   └── Models/
 │   │   │
 │   │   ├── Payment/
 │   │   │   ├── Controllers/
 │   │   │   ├── Routes/
 │   │   │   ├── Validation/
-│   │   │   └── Module/
+│   │   │   └── Models/
 │   │   │
 │   │   ├── Categories/
 │   │   │   ├── Controllers/
 │   │   │   ├── Routes/
 │   │   │   ├── Validation/
-│   │   │   └── Module/
+│   │   │   └── Models/
 │   │   │
 │   │   ├── Orders/
 │   │   │   ├── Controllers/
 │   │   │   ├── Routes/
 │   │   │   ├── Validation/
-│   │   │   └── Module/
+│   │   │   └── Models/
 │   │   │
 │   │   ├── Order_Items/
 │   │   │   ├── Controllers/
 │   │   │   ├── Routes/
 │   │   │   ├── Validation/
-│   │   │   └── Module/
+│   │   │   └── Models/
 │   │   │
 │   │   └── Users/
+│   │       ├── Controllers/
+│   │       ├── Routes/
+│   │       ├── Validation/
+│   │       └── Models/
 │   │       ├── Auth/
 │   │       │   ├── Controllers/
 │   │       │   ├── Routes/
 │   │       │   ├── Validation/
-│   │       │   └── Module/
+│   │       │   
 │   │       │
 │   │       ├── Controllers/
 │   │       ├── Routes/
@@ -178,10 +182,10 @@ ecommerce-backend/
 │   ├── constants/
 │   └── types/
 │
+├── index.ts
+│
 ├── prisma/
 │   └── schema.prisma
-│
-├── index.ts
 ├── .env
 ├── .gitignore
 ├── package.json

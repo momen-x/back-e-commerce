@@ -22,5 +22,5 @@ export const forgotPasswordValidation = z.object({
 
 export const resetPasswordValidation = z.object({
   password: z.string().min(6),
-  confirmPassword: z.string().min(6),
+  confirmPassword: z.string().min(8),
 });

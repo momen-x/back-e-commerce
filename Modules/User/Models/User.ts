@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -23,8 +22,8 @@ const userSchema = new mongoose.Schema(
     userImage: {
       type: Object,
       default: {
-        public_id:null,
-        url: "https://cdn.pixabay.com/photo/2017/11/10/05/48/user-2935527_1280.png"
+        public_id: null,
+        url: "https://cdn.pixabay.com/photo/2017/11/10/05/48/user-2935527_1280.png",
       },
     },
     email: {
@@ -33,10 +32,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-    },
-    emailVerified: {
-      type: Boolean,
-      default: false,
     },
     password: {
       type: String,
@@ -53,19 +48,27 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: String,
+    emailVerificationExpires: Date,
+    passwordResetToken:String,
+    passwordResetExpires:Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-//generate auth token 
+// //generate auth token
 export const generateToken = (userSchema.methods.generateToken = function () {
   const token = jwt.sign(
     {
       id: this._id,
-     userImage:this.userImage,
+      userImage: this.userImage,
       isAdmin: this.isAdmin,
     },
     process.env.JWT_SECRET_KEY as string,
-    { expiresIn: "5d" }
+    { expiresIn: "5d" },
   );
   return token;
 });

@@ -10,14 +10,16 @@ import {
   getLastOrder,
   getOrderById,
   getOrders,
+  getUserOrders,
 } from "../Controller/Order";
 
 const router = express.Router();
 
-router.route("/").get(verifyAdmin, getOrderById).post(VeriFyToken, addOrder);
+router.route("/").get(verifyAdmin, getOrders).post(VeriFyToken, addOrder);
 router.route("/last-order").get(VeriFyToken, getLastOrder);
+router.route("/user-orders").get(VeriFyToken, getUserOrders);
 router
   .route("/:id")
-  .get(verifyTokenAndAuthorization, getOrders)
+  .get(verifyTokenAndAuthorization, getOrderById)
   .delete(VeriFyToken, deleteOrder);
 export default router;
