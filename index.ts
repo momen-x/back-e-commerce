@@ -17,7 +17,7 @@ connectDB();
 const app = express();
 app.use(
   cors({
-    origin: "https://back-e-commerce-iyvz.onrender.com",
+    origin: "https://front-e-commarce.vercel.app/products",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
