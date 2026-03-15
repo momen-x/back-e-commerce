@@ -15,12 +15,34 @@ dotenv.config();
 
 connectDB();
 const app = express();
+// app.use(
+//   cors({
+//     origin: "https://front-e-commarce.vercel.app",
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   }),
+// );
+
 app.use(
   cors({
-    origin: "https://front-e-commarce.vercel.app/products",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://front-e-commarce.vercel.app",
+        "http://localhost:5173",
+      ];
+      
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
