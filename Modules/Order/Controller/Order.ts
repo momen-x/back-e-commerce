@@ -14,7 +14,6 @@ dotenv.config();
  *@access private just the admin can get all orders
  */
 export const getOrders = asyncHandler(async (req: Request, res: Response) => {
-
   const orders = await Order.find().populate(["orderItemsId", "user"]);
   res.status(200).json(orders);
 });
@@ -64,7 +63,7 @@ export const getLastOrder = asyncHandler(async (req, res) => {
     })
     .populate("user");
   if (!order) {
-    res.status(404).json({ message: "No orders found" });
+    res.status(200).json({ message: "this user does not have any order yet" });
     return;
   }
   res.status(200).json(order);
