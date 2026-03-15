@@ -107,7 +107,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
   res.status(200).json({
@@ -124,8 +124,8 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
   res.status(200).json({ message: "logged out successfully" });
 });
