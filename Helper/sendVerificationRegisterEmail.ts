@@ -1,36 +1,33 @@
+import axios from "axios";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-const sendEmail = async (to: string, subject: string, htmlContent: string) => {
-  await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": process.env.BREVO_API_KEY as string,
-    },
-    body: JSON.stringify({
-      sender: { email: process.env.EMAIL_USER, name: "e-Commerce App" },
-      to: [{ email: to }],
-      subject,
-      htmlContent,
-    }),
-  });
+export const sendVerificationRegisterEmail = async (email: string, token: string) => {
+  const inboxId = process.env.MAILTRAP_INBOX_ID; 
+  const apiToken = process.env.MAILTRAP_TOKEN; 
+
+  const data = {
+    from: { email: "registration@example.com", name: "E-Commerce App" },
+    to: [{ email: email }],
+    subject: "Verify your email",
+    html: `<h1>Welcome!</h1><p>Your token is: <b>${token}</b></p>`,
+  };
+
+  try {
+    const url = `https://sandbox.api.mailtrap.io/api/send/${inboxId}`;
+
+    const response = await axios.post(url, data, {
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("تم الإرسال! افتح Mailtrap وشوف الـ Messages الآن.");
+    return response.data;
+  } catch (error: any) {
+    console.error(" ERROR Mailtrap:", error.response?.data || error.message);
+    throw error;
+  }
 };
-
-export const sendVerificationRegisterEmail = async (
-  email: string,
-  token: string,
-) => {
-  const verificationLink = `${process.env.BASE_FRONT_URL}/verify-email/${token}`;
-  await sendEmail(
-    email,
-    "Verify your email",
-    `
-    <h2>Email Verification</h2>
-    <p>Click the link below to verify your email:</p>
-    <a href="${verificationLink}">Verify Email</a>
-  `,
-  );
-};
-
-

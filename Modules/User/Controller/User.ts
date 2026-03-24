@@ -8,7 +8,6 @@ import dotenv from "dotenv";
 import { uploadImage, removeImage } from "../../../utils/cloudinary";
 import { updatePasswordValidation } from "../Auth/Validations/PasswordValidation";
 import bcryptjs from "bcryptjs";
-import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -134,40 +133,41 @@ export const changePassword = asyncHandler(
  */
 export const addProfileImage = asyncHandler(
   async (req: Request, res: Response) => {
-    //1- VALIDATION
+    // 1- VALIDATION
     if (!req.file) {
       res.status(400).json({ error: "image is required" });
       return;
     }
-    //2- get the path to the image
-    const imagePath = path.join(
-      __dirname,
-      "../../../images",
-      req.file.filename,
-    );
-    //3-upload to cloudinary
-    const result: any = await uploadImage(imagePath);
-    // console.log("the result is : ",result);
+
+    // 2- Upload directly to Cloudinary from buffer (no disk involved)
+    const result: any = await uploadImage(req.file);
+
+    if (!result || !result.public_id) {
+      res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+      return;
+    }
+
+    // 3- Find user
     const user = await User.findById((req as any).user.id);
     if (!user) {
       res.status(404).json({ error: "user not found" });
       return;
     }
 
-    //4-delete the old user image if exist
-    const userImagePublicId = user.userImage.public_id;
-
-    if (userImagePublicId !== null) {
+    // 4- Delete the old user image if exists
+    const userImagePublicId = user.userImage?.public_id;
+    if (userImagePublicId) {
       await removeImage(userImagePublicId);
     }
-    //5-change the user image in the db
+
+    // 5- Update user image in DB
     user.userImage = {
       public_id: result.public_id,
       url: result.secure_url,
     };
     await user.save();
 
-    //6-sent response to client
+    // 6- Send response
     res.status(200).json({
       message: "user image updated successfully",
       userImage: {
@@ -175,11 +175,7 @@ export const addProfileImage = asyncHandler(
         url: result.secure_url,
       },
     });
-
-    //-7 delete  image from the server
-    fs.unlinkSync(imagePath);
-    return;
-  },
+  }
 );
 
 /**

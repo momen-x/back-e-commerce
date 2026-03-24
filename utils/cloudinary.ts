@@ -9,17 +9,33 @@ cloudinary.v2.config({
 });
 
 // export default cloudinary;
-export const uploadImage = async (file: any) => {
-  try {
-    const result = await cloudinary.v2.uploader.upload(file, {
-      resource_type: "auto",
-      use_filename: true,
-    });
-    return result;
-  } catch (error) {
-    return error;
-  }
+export const uploadImage = async (file: Express.Multer.File) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.uploader
+      .upload_stream(
+        {
+          resource_type: "auto",
+          use_filename: true,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      )
+      .end(file.buffer);
+  });
 };
+// export const uploadImage = async (file: any) => {
+//   try {
+//     const result = await cloudinary.v2.uploader.upload(file, {
+//       resource_type: "auto",
+//       use_filename: true,
+//     });
+//     return result;
+//   } catch (error) {
+//     return error;
+//   }
+// };
 export const removeImage = async (publicId: string) => {
   try {
     const result = await cloudinary.v2.uploader.destroy(publicId);

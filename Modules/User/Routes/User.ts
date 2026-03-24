@@ -13,7 +13,7 @@ import {
   getMe,
   updateUserInfo,
 } from "../Controller/User";
-import photoUpload from "../../../middlewares/photoUpload";
+import { upload } from "../../../middlewares/photoUpload";
 const router = express.Router();
 
 router
@@ -30,6 +30,6 @@ router
 
 router
   .route("/photo-upload")
-  .post(VeriFyToken, photoUpload.single("image"), addProfileImage);
+  .post(VeriFyToken, upload.single("image"), addProfileImage);
 
 export default router;

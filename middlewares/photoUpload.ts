@@ -1,32 +1,16 @@
-import path from "path";
 import multer from "multer";
-//photo storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../images"));
-  },
-  filename: function (req, file, cb) {
-    if (file) {
-      const date = new Date().getTime().toString().replace(/:/g, "-");
 
-      cb(null, date + "-" + file.originalname);
-    } else {
-      cb(null, "");
-    }
-  },
-});
+// Use memory storage instead of disk storage
+const storage = multer.memoryStorage();
 
-//photo upload middleware
-const photoUpload = multer({
-  storage: storage,
-  fileFilter: function (req, file, cb) {
+export const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb({ message: "only images are allowed" } as any, false);
+      cb(new Error("Only images are allowed"));
     }
   },
-  limits: { fileSize: 1024 * 1024 *2} ,//2 MB
 });
-
-export default photoUpload;
