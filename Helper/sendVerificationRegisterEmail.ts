@@ -1,33 +1,19 @@
-import axios from "axios";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-export const sendVerificationRegisterEmail = async (email: string, token: string) => {
-  const inboxId = process.env.MAILTRAP_INBOX_ID; 
-  const apiToken = process.env.MAILTRAP_TOKEN; 
-
-  const data = {
-    from: { email: "registration@example.com", name: "E-Commerce App" },
-    to: [{ email: email }],
-    subject: "Verify your email",
-    html: `<h1>Welcome!</h1><p>Your token is: <b>${token}</b></p>`,
-  };
-
-  try {
-    const url = `https://sandbox.api.mailtrap.io/api/send/${inboxId}`;
-
-    const response = await axios.post(url, data, {
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    console.log("تم الإرسال! افتح Mailtrap وشوف الـ Messages الآن.");
-    return response.data;
-  } catch (error: any) {
-    console.error(" ERROR Mailtrap:", error.response?.data || error.message);
-    throw error;
-  }
-};
+import nodemailer from "nodemailer"; 
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+ import dotenv from "dotenv";
+  dotenv.config();
+   export const sendVerificationResetPassword = async ( email: string, token: string, id:string ) =>
+     { const transportOptions = { host: "smtp.gmail.com", port: 587, secure: false, family: 4, auth:
+       { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS, }, } as SMTPTransport.Options; 
+       const verificationLink = `${process.env.BASE_FRONT_URL}/password/verify-email/${id}/${token}`;
+        const transporter = nodemailer.createTransport(transportOptions);
+         await transporter.sendMail({ from: `"e-Commerce App" <${process.env.EMAIL_USER}>`,
+           to: email, 
+           subject: "Verify your email", 
+           html: `
+            <h2>Email Verification</h2>
+            <p>Please click the link below to verify your email:</p>
+            <a href="${verificationLink}">Verify Email</a>
+           `, 
+            });
+           };
