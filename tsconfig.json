@@ -22,12 +22,12 @@
     "node_modules",
     "dist",
     "migrations",
+    "prisma.config.ts",
+    "neon.ts",
+    "hello.ts",
     ".agents",
     ".claude",
     ".cursor",
-    ".devin",
-    "neon.ts",
-    "prisma.config.ts",
-    "hello.ts"
+    ".devin"
   ]
 }
