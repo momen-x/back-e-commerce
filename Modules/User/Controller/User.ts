@@ -1,207 +1,338 @@
 import { Request, Response } from "express";
-import path from "path";
-import fs from "fs";
 import asyncHandler from "express-async-handler";
-import { updateUserInfoValidation } from "../Validations/UpdateUserInfo";
-import { User } from "../Models/User";
-import dotenv from "dotenv";
-import { uploadImage, removeImage } from "../../../utils/cloudinary";
-import { updatePasswordValidation } from "../Auth/Validations/PasswordValidation";
 import bcryptjs from "bcryptjs";
 
-dotenv.config();
+import { updateUserInfoValidation } from "../Validations/UpdateUserInfo";
+import { updatePasswordValidation } from "../Auth/Validations/PasswordValidation";
+
+import { uploadImage, removeImage } from "../../../utils/cloudinary";
+
+import { db } from "../../../src/prisma/db";
 
 /**
- * route get /api/users
- * desc get all users (admin only)
- * access private (admin only)
+ * @method GET
+ * @route /api/users
+ * @description get all users
+ * @access private - admin only
  */
 export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
-  const users = await User.find().select("-password");
-  res.status(200).json({ count: users.length, users });
-  return;
+  const users = await db.orm.public.User.all();
+
+  const usersWithoutPasswords = users.map((user) => {
+    const { password, ...userWithoutPassword } = user;
+
+    return userWithoutPassword;
+  });
+
+  res.status(200).json({
+    count: users.length,
+    users: usersWithoutPasswords,
+  });
 });
 
 /**
- * route get /api/users/:id
- * desc get user by id
- * access private (admin and user himself can access this route)
+ * @method GET
+ * @route /api/users/:id
+ * @description get user by id
+ * @access private - admin or user himself
  */
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findById(req.params.id).select("-password");
-  if (!user) {
-    res.status(404).json({ error: "user not found" });
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({
+      error: "user id is required",
+    });
     return;
   }
-  res.status(200).json(user);
-  return;
+
+  const user = await db.orm.public.User.where({
+    id: Number(id),
+  }).first();
+
+  if (!user) {
+    res.status(404).json({
+      error: "user not found",
+    });
+    return;
+  }
+
+  const { password, ...userWithoutPassword } = user;
+
+  res.status(200).json(userWithoutPassword);
 });
 
 /**
  * @method GET
  * @route /api/users/me
- * @description return user data
- * @access private just by user himself
+ * @description return logged in user data
+ * @access private
  */
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
-  const decoded = (req as any).user; // set by VerifyToken middleware
+  const decoded = (req as any).user;
 
-  const user = await User.findById(decoded.id).select("-password");
+  const user = await db.orm.public.User.where({
+    id: Number(decoded.id),
+  }).first();
+
   if (!user) {
-    res.status(404).json({ message: "User not found" });
+    res.status(404).json({
+      message: "user not found",
+    });
     return;
   }
-  res.status(200).json(user);
+
+  const { password, ...userWithoutPassword } = user;
+
+  res.status(200).json(userWithoutPassword);
 });
 
-/*
- *route PUT /api/users
- *desc update user info
- *access private (user can update only his info and admin can update any user info)
+/**
+ * @method PUT
+ * @route /api/users
+ * @description update logged in user info
+ * @access private
  */
 export const updateUserInfo = asyncHandler(
   async (req: Request, res: Response) => {
-    const decoded = (req as any).user; // set by VerifyToken middleware
-    const id = decoded.id;
+    const decoded = (req as any).user;
+    const userId = Number(decoded.id);
+
     const validation = updateUserInfoValidation.safeParse(req.body);
 
     if (!validation.success) {
-      res.status(400).json({ error: validation.error.issues[0].message });
-      return;
-    }
-    const { firstName, lastName, userImage } = validation.data;
-    const user = await User.findById(id);
-    if (!user) {
-      res.status(404).json({ error: "user not found" });
+      res.status(400).json({
+        error: validation.error.issues[0].message,
+      });
       return;
     }
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.userImage = userImage || user.userImage;
-    await user.save();
-    res.status(200).json({ message: "user info updated successfully" });
-    return;
+    const userQuery = db.orm.public.User.where({
+      id: userId,
+    });
+
+    const user = await userQuery.first();
+
+    if (!user) {
+      res.status(404).json({
+        error: "user not found",
+      });
+      return;
+    }
+
+    const { firstName, lastName } = validation.data;
+
+    type UserUpdateInput = Parameters<typeof userQuery.update>[0];
+
+    const updateData: UserUpdateInput = {
+      ...(firstName !== undefined && {
+        firstName: firstName as UserUpdateInput["firstName"],
+      }),
+
+      ...(lastName !== undefined && {
+        lastName: lastName as UserUpdateInput["lastName"],
+      }),
+    };
+
+    const updatedUser = await userQuery.update(updateData);
+    if (!updatedUser) {
+      res.status(500).json({
+        error: "failed to update user info in database",
+      });
+      return;
+    }
+    const { password, ...userWithoutPassword } = updatedUser;
+
+    res.status(200).json({
+      message: "user info updated successfully",
+      user: userWithoutPassword,
+    });
   },
 );
 
 /**
- *@route /api/users/password/change-password
- *@Method PUT
- *@description change the user password
- *@access private the user logged in
+ * @method PUT
+ * @route /api/users/password/change-password
+ * @description change logged in user password
+ * @access private
  */
 export const changePassword = asyncHandler(
   async (req: Request, res: Response) => {
-    const decoded = (req as any).user; // set by VerifyToken middleware
-    const id = decoded.id;
-    if (!id) {
-      res.status(403).json("the id not provided");
+    const decoded = (req as any).user;
+    const userId = Number(decoded.id);
+
+    if (!userId) {
+      res.status(403).json({
+        message: "user id not provided",
+      });
       return;
     }
 
     const validation = updatePasswordValidation.safeParse(req.body);
+
     if (!validation.success) {
-      res.status(400).json({ error: validation.error.issues[0].message });
+      res.status(400).json({
+        error: validation.error.issues[0].message,
+      });
       return;
     }
+
     const { oldPassword, newPassword } = validation.data;
 
-    const user = await User.findById(id);
+    const userQuery = db.orm.public.User.where({
+      id: userId,
+    });
+
+    const user = await userQuery.first();
+
     if (!user) {
-      res.status(404).json({ error: "user not found" });
+      res.status(404).json({
+        error: "user not found",
+      });
       return;
     }
+
     const isMatch = await bcryptjs.compare(oldPassword, user.password);
+
     if (!isMatch) {
-      res.status(400).json({ error: "old password is incorrect" });
+      res.status(400).json({
+        error: "old password is incorrect",
+      });
       return;
     }
+
     const salt = await bcryptjs.genSalt(10);
+
     const hashedPassword = await bcryptjs.hash(newPassword, salt);
-    user.password = hashedPassword;
-    await user.save();
-    res.status(200).json({ message: "password changed successfully" });
-    return;
+
+    await userQuery.update({
+      password: hashedPassword,
+    });
+
+    res.status(200).json({
+      message: "password changed successfully",
+    });
   },
 );
 
 /**
- *@route POST /api/users/photo-upload
- *@desc add new profile image
- @access Private (user can update only his image)
+ * @method POST
+ * @route /api/users/photo-upload
+ * @description upload or replace profile image
+ * @access private
  */
 export const addProfileImage = asyncHandler(
   async (req: Request, res: Response) => {
-    // 1- VALIDATION
     if (!req.file) {
-      res.status(400).json({ error: "image is required" });
+      res.status(400).json({
+        error: "image is required",
+      });
       return;
     }
 
-    // 2- Upload directly to Cloudinary from buffer (no disk involved)
+    const decoded = (req as any).user;
+    const userId = Number(decoded.id);
+
+    const userQuery = db.orm.public.User.where({
+      id: userId,
+    });
+
+    const user = await userQuery.first();
+
+    if (!user) {
+      res.status(404).json({
+        error: "user not found",
+      });
+      return;
+    }
+
+    // Upload new image first
     const result: any = await uploadImage(req.file);
 
-    if (!result || !result.public_id) {
-      res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+    if (!result?.public_id || !result?.secure_url) {
+      res.status(500).json({
+        error: "failed to upload image to Cloudinary",
+      });
       return;
     }
 
-    // 3- Find user
-    const user = await User.findById((req as any).user.id);
-    if (!user) {
-      res.status(404).json({ error: "user not found" });
+    // Delete old Cloudinary image
+    if (user.userImagePublicId) {
+      await removeImage(user.userImagePublicId);
+    }
+
+    // Update DB
+    const updatedUser = await userQuery.update({
+      userImageUrl: result.secure_url,
+      userImagePublicId: result.public_id,
+    });
+    if (!updatedUser) {
+      res.status(500).json({
+        error: "failed to update user image in database",
+      });
       return;
     }
 
-    // 4- Delete the old user image if exists
-    const userImagePublicId = user.userImage?.public_id;
-    if (userImagePublicId) {
-      await removeImage(userImagePublicId);
-    }
-
-    // 5- Update user image in DB
-    user.userImage = {
-      public_id: result.public_id,
-      url: result.secure_url,
-    };
-    await user.save();
-
-    // 6- Send response
     res.status(200).json({
       message: "user image updated successfully",
+
       userImage: {
-        public_id: result.public_id,
-        url: result.secure_url,
+        public_id: updatedUser.userImagePublicId
+          ? updatedUser.userImagePublicId
+          : null,
+        url: updatedUser.userImageUrl,
       },
     });
-  }
+  },
 );
 
 /**
- * @route DELETE /api/users/:id
- * @desc delete user by id
- * @access private (admin and user himself can access this route , the Admin account just by db manager can deleted)
+ * @method DELETE
+ * @route /api/users/:id
+ * @description delete user by id
+ * @access private - admin or user himself
  */
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id;
-  if (!userId) {
-    res.status(400).json({ error: "user id is required" });
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({
+      error: "user id is required",
+    });
     return;
   }
-  const user = await User.findById(userId);
+
+  const userId = Number(id);
+
+  const userQuery = db.orm.public.User.where({
+    id: userId,
+  });
+
+  const user = await userQuery.first();
+
   if (!user) {
-    res.status(404).json({ error: "user not found" });
+    res.status(404).json({
+      error: "user not found",
+    });
     return;
   }
+
   if (user.isAdmin) {
-    res.status(403).json({ error: "you can't delete admin account" });
+    res.status(403).json({
+      error: "you can't delete admin account",
+    });
     return;
   }
-  if (user.userImage.public_id) {
-    await removeImage(user.userImage.public_id);
+
+  // Delete profile image from Cloudinary
+  if (user.userImagePublicId) {
+    await removeImage(user.userImagePublicId);
   }
-  await user.deleteOne();
-  res.status(200).json({ message: "user deleted successfully" });
-  return;
+
+  // Delete user from PostgreSQL
+  await userQuery.delete();
+
+  res.status(200).json({
+    message: "user deleted successfully",
+  });
 });

@@ -1,0 +1,117 @@
+// use prisma-next
+enum OrderStatus {
+  @@type("pg/text@1")
+
+  PENDING = "pending"
+  PROCESSING = "processing"
+  SHIPPED = "shipped"
+  DELIVERED = "delivered"
+  CANCELLED = "cancelled"
+}
+model User {
+  id                       Int       @id @default(autoincrement())
+
+  firstName                VarChar(50)
+  lastName                 VarChar(50)
+
+  userImageUrl             String
+  userImagePublicId        String?
+
+  email                    String    @unique
+  password                 String
+
+  isAdmin                  Boolean   @default(false)
+  emailVerified            Boolean   @default(false)
+
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+
+  orders                   Order[]
+
+  createdAt                DateTime  @default(now())
+  updatedAt                temporal.updatedAt()
+}
+
+model Category {
+  id          Int                  @id @default(autoincrement())
+  title       VarChar(50)          @unique
+  description String
+
+  products    Product[]
+
+  createdAt   DateTime             @default(now())
+  updatedAt   temporal.updatedAt()
+}
+
+model Product {
+  id            Int                  @id @default(autoincrement())
+  title         VarChar(50)
+  description   String
+
+  price         Numeric(10, 2)
+
+  imageUrl      String
+  imagePublicId String?
+
+  categoryId    Int
+  category      Category             @relation(fields:[categoryId], references:[id], onDelete: Restrict)
+
+  orderItems    OrderItem[]
+
+  createdAt     DateTime             @default(now())
+  updatedAt     temporal.updatedAt()
+
+  @@index([categoryId])
+}
+
+model Order {
+  id                          Int         @id @default(autoincrement())
+
+  userId                      Int
+  user                        User        @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Restrict
+  )
+
+  phone                       VarChar(30)
+  address                     String
+  customerEmail               String
+  totalPrice                  Numeric(10, 2)
+
+  isPaid                      Boolean     @default(false)
+  status                      OrderStatus @default(PENDING)
+
+  verifyCustomerEmail         String?
+  verificationCustomerExpires DateTime?
+
+  orderItems                  OrderItem[]
+
+  createdAt                   DateTime    @default(now())
+  updatedAt                   temporal.updatedAt()
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        Int                  @id @default(autoincrement())
+
+  orderId   Int
+  order     Order                @relation(fields:[orderId], references:[id], onDelete: Cascade)
+
+  productId Int
+  product   Product              @relation(fields:[productId], references:[id], onDelete: Restrict)
+
+  quantity  Int
+  price     Numeric(10, 2)
+
+  createdAt DateTime             @default(now())
+  updatedAt temporal.updatedAt()
+
+  @@index([orderId])
+  @@index([productId])
+}

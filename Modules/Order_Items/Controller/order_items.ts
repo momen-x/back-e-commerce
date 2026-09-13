@@ -1,132 +1,254 @@
 import asyncHandler from "express-async-handler";
+import { Request, Response } from "express";
+
 import {
   orderItemsSchema,
   updateOrderItemsSchema,
 } from "../Validations/Order_items";
-import { OrderItem } from "../Models/Order_Item";
-import { Product } from "../../Products/Models/Product";
-import { Request, Response } from "express";
+
+import { db } from "../../../src/prisma/db";
 
 /**
- *@Method GET
- *@route ~/api/order-items
- * @description get  order items by id
- * @access private just admin can do that
- */
-export const getAllOrderItems = asyncHandler(async (req, res) => {
-  const orderItems = await OrderItem.find();
-  res.status(200).json(orderItems);
-  return;
-});
-/**
- *@Method GET
- *@route ~/api/order-items/:id
+ * @method GET
+ * @route /api/order-items
  * @description get all order items
- * @access private just admin and the user himself can do that
+ * @access private - admin only
  */
-export const getOrderItemsById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  if (!id) {
-    res.status(400).json({ message: "the id is required" });
-    return;
-  }
-  const orderItems = await OrderItem.findById(id);
-  if (!orderItems) {
-    res.status(404).json({ message: "the order item not found" });
-    return;
-  }
-  res.status(200).json(orderItems);
-  return;
-});
+export const getAllOrderItems = asyncHandler(
+  async (req: Request, res: Response) => {
+    const orderItems = await db.orm.public.OrderItem.include("product")
+      .include("order")
+      .all();
+
+    res.status(200).json(orderItems);
+  },
+);
+
 /**
- *@Method POST
- *@route ~/api/order-items
- * @description add new  order items
- * @access private just the logged in user
+ * @method GET
+ * @route /api/order-items/:id
+ * @description get order item by id
+ * @access private - admin or owner
  */
-export const addNewOrderItems = asyncHandler(async (req, res) => {
-  const validation = orderItemsSchema.safeParse(req.body);
-  if (!validation.success) {
-    res.status(400).json({ error: validation.error.issues[0].message });
-    return;
-  }
-  const { product, quantity ,price} = validation.data;
+export const getOrderItemsById = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
 
+    if (!id) {
+      res.status(400).json({
+        message: "the id is required",
+      });
+      return;
+    }
 
+    const orderItem = await db.orm.public.OrderItem.where({
+      id: Number(id),
+    })
+      .include("product")
+      .include("order")
+      .first();
 
-  const productExists = await Product.findById(product);
-  if (!productExists) {
-    res.status(404).json({ message: "Product not found" });
-    return;
-  }
+    if (!orderItem) {
+      res.status(404).json({
+        message: "the order item not found",
+      });
+      return;
+    }
 
-  const newOrderItem = await OrderItem.create({ product, quantity,price });
-  res.status(201).json(newOrderItem);
-});
+    res.status(200).json(orderItem);
+  },
+);
+
+/**
+ * @method POST
+ * @route /api/order-items
+ * @description add new order item
+ * @access private
+ */
+export const addNewOrderItems = asyncHandler(
+  async (req: Request, res: Response) => {
+    const validation = orderItemsSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      res.status(400).json({
+        error: validation.error.issues[0].message,
+      });
+      return;
+    }
+
+    const { orderId, productId, quantity, price } = validation.data;
+
+    // Check product
+    const product = await db.orm.public.Product.where({
+      id: Number(productId),
+    }).first();
+
+    if (!product) {
+      res.status(404).json({
+        message: "product not found",
+      });
+      return;
+    }
+
+    // Check order
+    const order = await db.orm.public.Order.where({
+      id: Number(orderId),
+    }).first();
+
+    if (!order) {
+      res.status(404).json({
+        message: "order not found",
+      });
+      return;
+    }
+
+    type OrderItemCreateInput = Parameters<
+      typeof db.orm.public.OrderItem.create
+    >[0];
+
+    const newOrderItem = await db.orm.public.OrderItem.create({
+      orderId: Number(orderId),
+
+      productId: Number(productId),
+
+      quantity,
+
+      price: price as unknown as OrderItemCreateInput["price"],
+    });
+
+    res.status(201).json(newOrderItem);
+  },
+);
 
 /**
  * @method PUT
  * @route /api/order-items/:id
- * @description update the order item
- * @access private admin and user himself can update the order-items
+ * @description update order item
+ * @access private - admin or owner
  */
 export const UpdateOrderItems = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const validation = updateOrderItemsSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({ message: validation.error.issues[0].message });
+    if (!id) {
+      res.status(400).json({
+        message: "the id is required",
+      });
       return;
     }
 
-    const { product } = validation.data;
+    const validation = updateOrderItemsSchema.safeParse(req.body);
 
+    if (!validation.success) {
+      res.status(400).json({
+        message: validation.error.issues[0].message,
+      });
+      return;
+    }
 
+    const { productId, orderId, quantity, price } = validation.data;
 
-    // If a product ID is provided in the update, ensure it exists.
-    if (product) {
-      const isProductExists = await Product.findById(product);
-      if (!isProductExists) {
-        res.status(404).json({ message: "The provided product was not found" });
+    const orderItemQuery = db.orm.public.OrderItem.where({
+      id: Number(id),
+    });
+
+    const orderItem = await orderItemQuery.first();
+
+    if (!orderItem) {
+      res.status(404).json({
+        message: "the order item not found",
+      });
+      return;
+    }
+
+    // If productId changed, check product
+    if (productId !== undefined) {
+      const product = await db.orm.public.Product.where({
+        id: Number(productId),
+      }).first();
+
+      if (!product) {
+        res.status(404).json({
+          message: "the provided product was not found",
+        });
         return;
       }
     }
 
-    // Use findByIdAndUpdate for an atomic update, returning the new document.
-    const updatedOrderItem = await OrderItem.findByIdAndUpdate(
-      id,
-      { $set: validation.data },
-      { new: true },
-    );
+    // If orderId changed, check order
+    if (orderId !== undefined) {
+      const order = await db.orm.public.Order.where({
+        id: Number(orderId),
+      }).first();
 
-    if (!updatedOrderItem) {
-      res.status(404).json({ message: "The order item not found" });
-      return;
+      if (!order) {
+        res.status(404).json({
+          message: "the provided order was not found",
+        });
+        return;
+      }
     }
+
+    type OrderItemUpdateInput = Parameters<typeof orderItemQuery.update>[0];
+
+    const updateData: OrderItemUpdateInput = {
+      ...(productId !== undefined && {
+        productId: Number(productId),
+      }),
+
+      ...(orderId !== undefined && {
+        orderId: Number(orderId),
+      }),
+
+      ...(quantity !== undefined && {
+        quantity,
+      }),
+
+      ...(price !== undefined && {
+        price: price as unknown as OrderItemUpdateInput["price"],
+      }),
+    };
+
+    const updatedOrderItem = await orderItemQuery.update(updateData);
 
     res.status(200).json(updatedOrderItem);
   },
 );
 
 /**
- *@Method DELETE
- *@route /api/order-items/:id
- *@description delete order items
- *@access private admin and the user himself can delete the order items
+ * @method DELETE
+ * @route /api/order-items/:id
+ * @description delete order item
+ * @access private - admin or owner
  */
-export const deleteOrderItem = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  if (!id) {
-    res.status(400).json({ message: "the id is required" });
-    return;
-  }
-  const orderItem = await OrderItem.findById(id);
-  if (!orderItem) {
-    res.status(404).json({ message: "the order item not found" });
-    return;
-  }
-  await orderItem.deleteOne();
-  res.status(200).json({ message: "the order item deleted successfully" });
-  return;
-});
+export const deleteOrderItem = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({
+        message: "the id is required",
+      });
+      return;
+    }
+
+    const orderItemQuery = db.orm.public.OrderItem.where({
+      id: Number(id),
+    });
+
+    const orderItem = await orderItemQuery.first();
+
+    if (!orderItem) {
+      res.status(404).json({
+        message: "the order item not found",
+      });
+      return;
+    }
+
+    await orderItemQuery.delete();
+
+    res.status(200).json({
+      message: "the order item deleted successfully",
+    });
+  },
+);

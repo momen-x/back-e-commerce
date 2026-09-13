@@ -1,12 +1,16 @@
 {
   "name": "e-commerce-bake-end",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node index.ts"
+    "dev": "ts-node index.ts",
+    "watch": "tsx watch index.ts",
+    "contract:emit": "prisma contract emit",
+    "seed": "tsx src/prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +18,9 @@
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
     "@getbrevo/brevo": "^5.0.1",
+    "@neon/config": "^1.4.2",
+    "@neon/env": "^1.3.2",
+    "@prisma/orm-postgres": "8.0.0-rc.9",
     "@types/nodemailer": "^7.0.11",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
@@ -24,13 +31,14 @@
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.2.2",
     "multer": "^2.1.0",
     "nodemailer": "^8.0.2",
     "stripe": "^20.4.1",
+    "temporal-polyfill": "^1.0.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@prisma/cli-engine": "0.3.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -39,7 +47,9 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^25.3.0",
     "nodemon": "^3.1.14",
+    "prisma": "8.0.0-rc.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3"
   }
 }

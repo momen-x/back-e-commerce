@@ -6,3 +6,5 @@ export const registerValidation = z.object({
   email: z.string().email().lowercase().trim(),
   password: z.string().min(6),
 });
+
+export type RegisterValidation = z.infer<typeof registerValidation>;

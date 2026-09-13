@@ -1,13 +1,10 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { Product } from "../Models/Product";
-import path from "path";
 import { addProductSchema, updateProductSchema } from "../Validations/Product";
 import { removeImage, uploadImage } from "../../../utils/cloudinary";
 
-import fs from "fs";
-import { Category } from "../../Category/Models/Category";
 import { upload } from "../../../middlewares/photoUpload";
+import { db } from "../../../src/prisma/db";
 
 const countOfProductInAllPage = 8;
 const pageOne = 1;
@@ -20,18 +17,31 @@ const pageOne = 1;
 export const getAllProducts = asyncHandler(
   async (req: Request, res: Response) => {
     const page = Number(req.query.page) || pageOne;
-    let countProduct = Number(req.query.limit);
-    if (!countProduct) {
-      countProduct = countOfProductInAllPage;
-    }
-    const Products = await Product.find()
-      .skip(countProduct * (page - 1))
-      .limit(countProduct)
-      .populate("categoryId", ["title", "description", "_id"])
-      .sort({ createdAt: -1 });
 
-    res.status(200).json(Products);
-    return;
+    const countProduct = Number(req.query.limit) || countOfProductInAllPage;
+
+    const products = await db.orm.public.Product.include(
+      "category",
+      (category) => category.select("id", "title", "description"),
+    )
+      .orderBy((product) => product.createdAt.desc())
+      .offset(countProduct * (page - 1))
+      .limit(countProduct)
+      .all();
+    const { total: productsCount } = await db.orm.public.Product.aggregate(
+      (agg) => ({
+        total: agg.count(),
+      }),
+    );
+    const PageCount = Math.ceil(productsCount / countProduct);
+
+    res.status(200).json({
+      success: true,
+      count: productsCount,
+      pageCount: PageCount,
+      category: "all",
+      products,
+    });
   },
 );
 /**
@@ -48,26 +58,29 @@ export const getProductsByCategory = asyncHandler(
       res.status(400).json("id is required");
       return;
     }
-    const category = await Category.findById(id);
+    const category = await db.orm.public.Category.where({
+      id: Number(id),
+    }).first();
     if (!category) {
       res.status(404).json("category not found");
       return;
     }
 
-    const products = await Product.find({ categoryId: id })
-      .skip(countProduct * (page - 1))
+    const products = await db.orm.public.Product.where({
+      categoryId: Number(id),
+    })
+      .offset(countProduct * (page - 1))
       .limit(countProduct)
-      .populate("categoryId", ["title", "description", "_id"]);
+      .include("category", (category) =>
+        category.select("id", "title", "description"),
+      )
+      .all();
 
-    if (products.length === 0) {
-      res.status(200).json({
-        message: "No products found in this category",
-        products: [],
-      });
-      return;
-    }
-    const getProducts = await Product.find({ categoryId: id });
-    const productsCount = getProducts.length;
+    const { total: productsCount } = await db.orm.public.Product.aggregate(
+      (agg) => ({
+        total: agg.count(),
+      }),
+    );
     const PageCount = Math.ceil(productsCount / countProduct);
     res.status(200).json({
       success: true,
@@ -90,7 +103,7 @@ export const getProductsCount = asyncHandler(
     if (!countProduct) {
       countProduct = countOfProductInAllPage;
     }
-    const Products = await Product.find();
+    const Products = await db.orm.public.Product.all();
     const pageCount = Math.ceil(Products.length / countProduct);
     res
       .status(200)
@@ -108,41 +121,70 @@ export const addProduct = [
   upload.single("image"),
 
   asyncHandler(async (req: Request, res: Response) => {
-    // 1- Validation
+    // 1. Validate request body
     const validation = addProductSchema.safeParse(req.body);
+
     if (!validation.success) {
-      res.status(400).json(validation.error.issues[0].message);
+      res.status(400).json({
+        message: validation.error.issues[0].message,
+      });
       return;
     }
 
     const { categoryId, description, price, title } = validation.data;
 
-    // 2- Upload image to Cloudinary if provided
-    let productImage = null;
-    if (req.file) {
-      const result: any = await uploadImage(req.file);
-      if (!result?.public_id) {
-        res.status(500).json("Error uploading image");
-        return;
-      }
-      productImage = {
-        public_id: result.public_id,
-        url: result.secure_url,
-      };
+    // 2. Make sure the category exists
+    const category = await db.orm.public.Category.where({
+      id: Number(categoryId),
+    }).first();
+
+    if (!category) {
+      res.status(404).json({
+        message: "Category not found",
+      });
+      return;
     }
 
-    // 3- Create and save the product
-    const newProduct = new Product({
-      title,
-      description,
-      price,
-      categoryId,
-      ...(productImage && { image: productImage }), // only add if image exists
-    });
+    // 3. Upload image if provided
+    let imageUrl: string | undefined;
+    let imagePublicId: string | undefined;
 
-    await newProduct.save();
+    if (req.file) {
+      const result: any = await uploadImage(req.file);
 
-    // 4- Send response
+      if (!result?.public_id || !result?.secure_url) {
+        res.status(500).json({
+          message: "Error uploading image",
+        });
+        return;
+      }
+
+      imagePublicId = result.public_id;
+      imageUrl = result.secure_url;
+    }
+
+    // 4. Get the exact Prisma 8 create-input type
+    type ProductCreateInput = Parameters<
+      typeof db.orm.public.Product.create
+    >[0];
+
+    const productData: ProductCreateInput = {
+      title: title as ProductCreateInput["title"],
+      imageUrl: imageUrl as ProductCreateInput["imageUrl"],
+      description: description as ProductCreateInput["description"],
+      price: price as unknown as ProductCreateInput["price"],
+
+      categoryId: Number(categoryId),
+
+      ...(imagePublicId !== undefined && {
+        imagePublicId,
+      }),
+    };
+
+    // 5. Create product
+    const newProduct = await db.orm.public.Product.create(productData);
+
+    // 6. Response
     res.status(201).json(newProduct);
   }),
 ];
@@ -158,7 +200,9 @@ export const getProductById = asyncHandler(
       res.status(400).json("id is required");
       return;
     }
-    const product = await Product.findById(id);
+    const product = await db.orm.public.Product.where({
+      id: Number(id),
+    }).first();
     if (!product) {
       res.status(404).json("product not found");
       return;
@@ -176,59 +220,100 @@ export const updateProduct = [
   upload.single("image"),
 
   asyncHandler(async (req: Request, res: Response) => {
-    // 1- Validate id
+    // 1. Validate id
     const { id } = req.params;
+
     if (!id) {
       res.status(400).json("id is required");
       return;
     }
 
-    // 2- Validate body
+    const productId = Number(id);
+
+    // 2. Validate body
     const validation = updateProductSchema.safeParse(req.body);
+
     if (!validation.success) {
       res.status(400).json(validation.error.issues[0].message);
       return;
     }
 
-    // 3- Find product
-    const product = await Product.findById(id);
+    // 3. Find product
+    const productQuery = db.orm.public.Product.where({
+      id: productId,
+    });
+
+    const product = await productQuery.first();
+
     if (!product) {
       res.status(404).json("product not found");
       return;
     }
 
-    // 4- Handle image upload
-    let imageData = (product as any).image; // keep old image by default
+    // 4. Start with old image
+    let imageUrl = product.imageUrl;
+    let imagePublicId = product.imagePublicId;
 
+    // 5. Upload new image if provided
     if (req.file) {
-      // Upload new image first
       const result: any = await uploadImage(req.file);
-      if (!result?.public_id) {
+
+      if (!result?.public_id || !result?.secure_url) {
         res.status(500).json("Error uploading image");
         return;
       }
 
-      // ✅ Delete old image from Cloudinary if it exists
-      if (imageData?.public_id) {
-        await removeImage(imageData.public_id);
+      // Delete old Cloudinary image
+      if (imagePublicId) {
+        await removeImage(imagePublicId);
       }
 
-      // ✅ Use the new image
-      imageData = {
-        public_id: result.public_id,
-        url: result.secure_url,
-      };
+      // Save new image values
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;
     }
 
-    // 5- Update product
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        ...validation.data,
-        image: imageData, // ✅ new image if uploaded, old image if not
-      },
-      { new: true },
-    );
+    // 6. Get exact Prisma update type
+    type ProductUpdateInput = Parameters<typeof productQuery.update>[0];
+
+    const { title, description, price, categoryId } = validation.data;
+
+    // 7. If categoryId changed, make sure category exists
+    if (categoryId !== undefined) {
+      const category = await db.orm.public.Category.where({
+        id: Number(categoryId),
+      }).first();
+
+      if (!category) {
+        res.status(404).json("category not found");
+        return;
+      }
+    }
+
+    // 8. Build update data
+    const updateData: ProductUpdateInput = {
+      ...(title !== undefined && {
+        title: title as ProductUpdateInput["title"],
+      }),
+
+      ...(description !== undefined && {
+        description,
+      }),
+
+      ...(price !== undefined && {
+        price: price as unknown as ProductUpdateInput["price"],
+      }),
+
+      ...(categoryId !== undefined && {
+        categoryId: Number(categoryId),
+      }),
+
+      imageUrl,
+      imagePublicId,
+    };
+
+    // 9. Update product
+    const updatedProduct = await productQuery.update(updateData);
 
     res.status(200).json(updatedProduct);
   }),
@@ -246,13 +331,18 @@ export const deleteProduct = asyncHandler(
       res.status(400).json("id is required");
       return;
     }
-    const product = await Product.findByIdAndDelete(id);
+    const product = await db.orm.public.Product.where({
+      id: Number(id),
+    }).first();
     if (!product) {
       res.status(404).json("product not found");
       return;
     }
-    if (product.image.public_id) {
-      await removeImage(product.image.public_id);
+    await db.orm.public.Product.where({
+      id: Number(id),
+    }).delete();
+    if (product.imagePublicId) {
+      await removeImage(product.imagePublicId);
     }
 
     res.status(200).json({ message: "product deleted successfully" });

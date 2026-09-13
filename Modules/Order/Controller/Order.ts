@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { Order } from "../Models/Order";
 import { OrderSchema } from "../Validations/Order";
-import { OrderItem } from "../../Order_Items/Models/Order_Item";
 import dotenv from "dotenv";
+import { db } from "../../../src/prisma/db";
 
 dotenv.config();
 
@@ -14,7 +13,10 @@ dotenv.config();
  *@access private just the admin can get all orders
  */
 export const getOrders = asyncHandler(async (req: Request, res: Response) => {
-  const orders = await Order.find().populate(["orderItemsId", "user"]);
+  const orders = await db.orm.public.Order.include("orderItems")
+    .include("user")
+    .all();
+
   res.status(200).json(orders);
 });
 /**
@@ -26,15 +28,37 @@ export const getOrders = asyncHandler(async (req: Request, res: Response) => {
 export const getOrderById = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
+
     if (!id) {
-      res.status(400).json({ message: "id is required" });
+      res.status(400).json({
+        message: "id is required",
+      });
       return;
     }
-    const order = await Order.findById(id);
+
+    const decoded = (req as any).user;
+
+    const order = await db.orm.public.Order.where({
+      id: Number(id),
+    })
+      .include("orderItems")
+      .include("user")
+      .first();
+
     if (!order) {
-      res.status(404).json({ message: "order not found" });
+      res.status(404).json({
+        message: "order not found",
+      });
       return;
     }
+
+    if (order.userId !== Number(decoded.id) && !decoded.isAdmin) {
+      res.status(403).json({
+        message: "you are not authorized to access this order",
+      });
+      return;
+    }
+
     res.status(200).json(order);
   },
 );
@@ -45,48 +69,56 @@ export const getOrderById = asyncHandler(
  * @description check if the last order paid or not
  * @access private the user himself
  */
-export const getLastOrder = asyncHandler(async (req, res) => {
-  const decoded = (req as any).user; // set by VerifyToken middleware
-  const id = decoded.id;
-  if (!id) {
-    res.status(400).json({ message: "id is required" });
-    return;
-  }
-  const order = await Order.findOne({ user: id })
-    .sort({ createdAt: -1 })
-    .populate({
-      path: "orderItemsId",
-      populate: {
-        path: "product", // ← populate product inside each order item
-        model: "Product",
-      },
-    })
-    .populate("user");
-  if (!order) {
-    res.status(200).json({ message: "this user does not have any order yet" });
-    return;
-  }
-  res.status(200).json(order);
-  return;
-});
+export const getLastOrder = asyncHandler(
+  async (req: Request, res: Response) => {
+    const decoded = (req as any).user;
+    const id = decoded.id;
 
+    if (!id) {
+      res.status(400).json({ message: "id is required" });
+      return;
+    }
+
+    const order = await db.orm.public.Order.where({
+      userId: Number(id),
+    })
+      .include("orderItems")
+      .include("user")
+      .orderBy((order) => order.createdAt.desc())
+      .first();
+
+    if (!order) {
+      res.status(200).json({
+        message: "this user does not have any order yet",
+      });
+      return;
+    }
+
+    res.status(200).json(order);
+  },
+);
 /**
  * @Method GET
  * @route /api/orders/user-orders
  * @description get the orders that the user paid
  * @access private the user himself can see own orders
  */
-export const getUserOrders = asyncHandler(async (req, res) => {
-  const { id } = (req as any).user;
-  if (!id) {
-    res.status(400).json({ message: "id is required" });
-    return;
-  }
-  const orders = await Order.find({ user: id, isPaid: true }).populate({
-    path: "orderItemsId",
-  });
-  res.status(200).json(orders);
-});
+export const getUserOrders = asyncHandler(
+  async (req: Request, res: Response) => {
+    const decoded = (req as any).user;
+    const userId = Number(decoded.id);
+
+    const orders = await db.orm.public.Order.where({
+      userId,
+    })
+      .include("orderItems")
+      .include("user")
+      .orderBy((order) => order.createdAt.desc())
+      .all();
+
+    res.status(200).json(orders);
+  },
+);
 
 /**
  * @method POST
@@ -96,22 +128,92 @@ export const getUserOrders = asyncHandler(async (req, res) => {
  */
 export const addOrder = asyncHandler(async (req: Request, res: Response) => {
   const validation = OrderSchema.safeParse(req.body);
+
   if (!validation.success) {
-    res.status(400).json({ message: validation.error.issues[0].message });
+    res.status(400).json({
+      message: validation.error.issues[0].message,
+    });
     return;
   }
-  const { orderItemsId } = validation.data;
 
-  const foundOrderItems = await Promise.all(
-    orderItemsId.map(async (itemId) => await OrderItem.findById(itemId)),
+  const decoded = (req as any).user;
+  const userId = Number(decoded.id);
+
+  const { address, customerEmail, phone, orderItems } = validation.data;
+
+  // 1. Make sure user exists
+  const user = await db.orm.public.User.where({
+    id: userId,
+  }).first();
+
+  if (!user) {
+    res.status(404).json({
+      message: "user not found",
+    });
+    return;
+  }
+
+  // 2. Load products from DB
+  const products = await Promise.all(
+    orderItems.map(async (item) => {
+      const product = await db.orm.public.Product.where({
+        id: item.productId,
+      }).first();
+
+      return {
+        ...item,
+        product,
+      };
+    }),
   );
-  // If any item in the array is null, it means it wasn't found
-  if (foundOrderItems.includes(null)) {
-    res.status(404).json({ message: "One or more order items not found" });
+
+  const missingProduct = products.find((item) => !item.product);
+
+  if (missingProduct) {
+    res.status(404).json({
+      message: `product ${missingProduct.productId} not found`,
+    });
     return;
   }
 
-  const order = await Order.create(validation.data);
+  type OrderCreateInput = Parameters<typeof db.orm.public.Order.create>[0];
+
+  type OrderItemCreateInput = Parameters<
+    typeof db.orm.public.OrderItem.create
+  >[0];
+
+  // 3. Calculate total from DB prices
+  const totalPrice = products.reduce((total, item) => {
+    const price = Number(item.product!.price);
+
+    return total + price * item.quantity;
+  }, 0);
+
+  // 4. Create order + order items together
+  const order = await db.orm.public.Order.create({
+    userId,
+
+    address,
+
+    customerEmail,
+
+    phone: phone as OrderCreateInput["phone"],
+
+    totalPrice: totalPrice as unknown as OrderCreateInput["totalPrice"],
+
+    orderItems: (items) =>
+      items.create(
+        products.map((item) => ({
+          productId: item.productId,
+
+          quantity: item.quantity,
+
+          price: item.product!
+            .price as unknown as OrderItemCreateInput["price"],
+        })),
+      ),
+  });
+
   res.status(201).json(order);
 });
 
@@ -123,16 +225,39 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
  */
 export const deleteOrder = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
+
   if (!id) {
-    res.status(400).json({ message: "id is required" });
+    res.status(400).json({
+      message: "id is required",
+    });
     return;
   }
-  const order = await Order.findById(id);
+
+  const decoded = (req as any).user;
+
+  const orderQuery = db.orm.public.Order.where({
+    id: Number(id),
+  });
+
+  const order = await orderQuery.first();
+
   if (!order) {
-    res.status(404).json({ message: "order not found" });
+    res.status(404).json({
+      message: "order not found",
+    });
     return;
   }
-  await OrderItem.deleteMany({ _id: { $in: order.orderItemsId } });
-  await order.deleteOne();
-  res.status(200).json({ message: "order deleted" });
+
+  if (order.userId !== Number(decoded.id) && !decoded.isAdmin) {
+    res.status(403).json({
+      message: "you are not authorized to delete this order",
+    });
+    return;
+  }
+
+  await orderQuery.delete();
+
+  res.status(200).json({
+    message: "order deleted successfully",
+  });
 });

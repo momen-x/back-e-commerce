@@ -1,6 +1,7 @@
 import z from "zod";
 
-export const updatePasswordValidation = z  .object({
+export const updatePasswordValidation = z
+  .object({
     oldPassword: z.string().min(1, "the old password is required"),
     newPassword: z
       .string()
@@ -15,7 +16,6 @@ export const updatePasswordValidation = z  .object({
   });
 export type UpdatePasswordType = z.infer<typeof updatePasswordValidation>;
 
-
 export const forgotPasswordValidation = z.object({
   email: z.string().email().lowercase().trim(),
 });
@@ -24,3 +24,5 @@ export const resetPasswordValidation = z.object({
   password: z.string().min(6),
   confirmPassword: z.string().min(8),
 });
+
+export type ResetPasswordType = z.infer<typeof resetPasswordValidation>;

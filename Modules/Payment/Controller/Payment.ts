@@ -1,8 +1,8 @@
 import Stripe from "stripe";
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
-import { Order } from "../../Order/Models/Order";
 import dotenv from "dotenv"
+import { db } from "../../../src/prisma/db.js";
 
 dotenv.config()
 
@@ -23,7 +23,9 @@ export const createPaymentIntent = asyncHandler(async (req: Request, res: Respon
   }
 
   // Get the order from DB
-  const order = await Order.findById(orderId);
+  const order = await db.orm.public.Order.where({
+    id: orderId,
+  }).first();
   if (!order) {
     res.status(404).json({ message: "Order not found" });
     return;
@@ -52,7 +54,9 @@ export const createPaymentIntent = asyncHandler(async (req: Request, res: Respon
 export const confirmPayment = asyncHandler(async (req: Request, res: Response) => {
   const { orderId } = req.body;
 
-  const order = await Order.findById(orderId);
+  const order = await db.orm.public.Order.where({
+    id: orderId,
+  }).first();
   if (!order) {
     res.status(404).json({ message: "Order not found" });
     return;
