@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { addProductSchema, updateProductSchema } from "../Validations/Product";
-import { removeImage, uploadImage } from "../../../utils/cloudinary";
+import { addProductSchema, updateProductSchema } from "../Validations/Product.js";
+import { removeImage, uploadImage } from "../../../utils/cloudinary.js";
 
-import { upload } from "../../../middlewares/photoUpload";
-import { db } from "../../../src/prisma/db";
+import { upload } from "../../../middlewares/photoUpload.js";
+import { db } from "../../../src/prisma/db.js";
 
 const countOfProductInAllPage = 8;
 const pageOne = 1;

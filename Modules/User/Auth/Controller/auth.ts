@@ -4,9 +4,9 @@ import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
-import { loginValidation } from "../Validations/LoginValidation";
-import { registerValidation } from "../Validations/RegisterValidation";
-import { db } from "../../../../src/prisma/db";
+import { loginValidation } from "../Validations/LoginValidation.js";
+import { registerValidation } from "../Validations/RegisterValidation.js";
+import { db } from "../../../../src/prisma/db.js";
 import { Temporal } from "temporal-polyfill";
 
 /**

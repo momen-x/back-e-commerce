@@ -2,12 +2,12 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import bcryptjs from "bcryptjs";
 
-import { updateUserInfoValidation } from "../Validations/UpdateUserInfo";
-import { updatePasswordValidation } from "../Auth/Validations/PasswordValidation";
+import { updateUserInfoValidation } from "../Validations/UpdateUserInfo.js";
+import { updatePasswordValidation } from "../Auth/Validations/PasswordValidation.js";
 
-import { uploadImage, removeImage } from "../../../utils/cloudinary";
+import { uploadImage, removeImage } from "../../../utils/cloudinary.js";
 
-import { db } from "../../../src/prisma/db";
+import { db } from "../../../src/prisma/db.js";
 
 /**
  * @method GET

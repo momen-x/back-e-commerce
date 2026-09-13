@@ -3,14 +3,14 @@ import {
   verifyAdmin,
   verifyTokenAndAuthorization,
   VeriFyToken
-} from "../../../middlewares/verifyToken";
+} from "../../../middlewares/verifyToken.js";
 import {
   getAllOrderItems,
   getOrderItemsById,
   addNewOrderItems,
   deleteOrderItem,
   UpdateOrderItems,
-} from "../Controller/order_items";
+} from "../Controller/order_items.js";
 const router = express.Router();
 
 router

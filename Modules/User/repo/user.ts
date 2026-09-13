@@ -1,8 +1,8 @@
-import { LoginValidation } from "../Auth/Validations/LoginValidation";
-import { ResetPasswordType, UpdatePasswordType } from "../Auth/Validations/PasswordValidation";
-import { RegisterValidation } from "../Auth/Validations/RegisterValidation";
-import { User } from "../entities/user";
-import { UpdateUserInfoValidation } from "../Validations/UpdateUserInfo";
+import { LoginValidation } from "../Auth/Validations/LoginValidation.js";
+import { ResetPasswordType, UpdatePasswordType } from "../Auth/Validations/PasswordValidation.js";
+import { RegisterValidation } from "../Auth/Validations/RegisterValidation.js";
+import { User } from "../entities/user.js";
+import { UpdateUserInfoValidation } from "../Validations/UpdateUserInfo.js";
 
 export interface UserPrisma {
     findAll(): Promise<User[]>;

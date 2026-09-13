@@ -3,7 +3,7 @@ import {
   verifyAdmin,
   verifyTokenAndAuthorization,
   VeriFyToken,
-} from "../../../middlewares/verifyToken";
+} from "../../../middlewares/verifyToken.js";
 import {
   addProfileImage,
   changePassword,
@@ -12,8 +12,8 @@ import {
   getUserById,
   getMe,
   updateUserInfo,
-} from "../Controller/User";
-import { upload } from "../../../middlewares/photoUpload";
+} from "../Controller/User.js";
+import { upload } from "../../../middlewares/photoUpload.js";
 const router = express.Router();
 
 router

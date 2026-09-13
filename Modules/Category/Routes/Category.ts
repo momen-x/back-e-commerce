@@ -1,6 +1,6 @@
 import express from "express";
-import {verifyAdmin} from "../../../middlewares/verifyToken"
-import { addCategory, deleteCategory, getAllCategories, getCategoryById, updateCategory } from "../Controller/Category";
+import {verifyAdmin} from "../../../middlewares/verifyToken.js"
+import { addCategory, deleteCategory, getAllCategories, getCategoryById, updateCategory } from "../Controller/Category.js";
 
 const router = express.Router();
 

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { OrderSchema } from "../Validations/Order";
+import { OrderSchema } from "../Validations/Order.js";
 import dotenv from "dotenv";
-import { db } from "../../../src/prisma/db";
+import { db } from "../../../src/prisma/db.js";
 
 dotenv.config();
 

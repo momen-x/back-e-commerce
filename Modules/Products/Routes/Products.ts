@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyAdmin } from "../../../middlewares/verifyToken";
+import { verifyAdmin } from "../../../middlewares/verifyToken.js";
 import {
   addProduct,
   deleteProduct,
@@ -8,7 +8,7 @@ import {
   getProductsByCategory,
   getProductsCount,
   updateProduct,
-} from "../Controller/Product";
+} from "../Controller/Product.js";
 
 const router = express.Router();
 

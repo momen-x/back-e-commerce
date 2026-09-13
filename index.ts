@@ -5,16 +5,16 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import userRoute from "./Modules/User/Routes/User";
-import authRoute from "./Modules/User/Auth/Routes/Auth";
-import categoryRoute from "./Modules/Category/Routes/Category";
-import ProductsRoute from "./Modules/Products/Routes/Products";
-import OrderItemRoute from "./Modules/Order_Items/Routes/Order_items";
-import OrderRoute from "./Modules/Order/Routes/Order";
-import paymentRoute from "./Modules/Payment/Routes/Payment";
+import userRoute from "./Modules/User/Routes/User.js";
+import authRoute from "./Modules/User/Auth/Routes/Auth.js";
+import categoryRoute from "./Modules/Category/Routes/Category.js";
+import ProductsRoute from "./Modules/Products/Routes/Products.js";
+import OrderItemRoute from "./Modules/Order_Items/Routes/Order_items.js";
+import OrderRoute from "./Modules/Order/Routes/Order.js";
+import paymentRoute from "./Modules/Payment/Routes/Payment.js";
 
-import { errorHandler, notFound } from "./middlewares/err";
-import { db } from "./src/prisma/db";
+import { errorHandler, notFound } from "./middlewares/err.js";
+import { db } from "./src/prisma/db.js";
 
 dotenv.config();
 

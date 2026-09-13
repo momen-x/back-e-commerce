@@ -4,9 +4,9 @@ import { Request, Response } from "express";
 import {
   orderItemsSchema,
   updateOrderItemsSchema,
-} from "../Validations/Order_items";
+} from "../Validations/Order_items.js";
 
-import { db } from "../../../src/prisma/db";
+import { db } from "../../../src/prisma/db.js";
 
 /**
  * @method GET

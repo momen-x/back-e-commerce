@@ -33,7 +33,7 @@ export const createPaymentIntent = asyncHandler(async (req: Request, res: Respon
 
   // Create payment intent with Stripe
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: Math.round(order.totalPrice * 100), // ← Stripe uses cents!
+    amount: Math.round(Number(order.totalPrice) * 100), // ← Stripe uses cents!
     currency: "usd",
     metadata: {
       orderId: orderId, // ← save orderId to use in webhook later
@@ -62,9 +62,10 @@ export const confirmPayment = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  order.isPaid = true;
-  order.status = "processing";
-  await order.save();
+  const updatedOrder = await db.orm.public.Order.where({ id: order.id }).update({
+    isPaid: true,
+    status: "processing",
+  });
 
-  res.status(200).json({ message: "Payment confirmed", order });
+  res.status(200).json({ message: "Payment confirmed", order: updatedOrder });
 });

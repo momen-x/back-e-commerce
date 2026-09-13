@@ -1,6 +1,6 @@
 import express from "express";
 
-import { verifyAdmin, VeriFyToken } from "../../../middlewares/verifyToken";
+import { verifyAdmin, VeriFyToken } from "../../../middlewares/verifyToken.js";
 
 import {
   addOrder,
@@ -9,7 +9,7 @@ import {
   getOrderById,
   getOrders,
   getUserOrders,
-} from "../Controller/Order";
+} from "../Controller/Order.js";
 
 const router = express.Router();
 

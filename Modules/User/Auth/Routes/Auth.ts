@@ -4,7 +4,7 @@ import {
   logout,
   registerUser,
   verifyEmail,
-} from "../Controller/auth";
+} from "../Controller/auth.js";
 
 
 

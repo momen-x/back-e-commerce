@@ -1,13 +1,13 @@
-import { db } from "../../../src/prisma/db";
-import { LoginValidation } from "../Auth/Validations/LoginValidation";
+import { db } from "../../../src/prisma/db.js";
+import { LoginValidation } from "../Auth/Validations/LoginValidation.js";
 import {
   UpdatePasswordType,
   ResetPasswordType,
-} from "../Auth/Validations/PasswordValidation";
-import { RegisterValidation } from "../Auth/Validations/RegisterValidation";
-import { User } from "../entities/user";
-import { UpdateUserInfoValidation } from "../Validations/UpdateUserInfo";
-import { UserPrisma } from "./user";
+} from "../Auth/Validations/PasswordValidation.js";
+import { RegisterValidation } from "../Auth/Validations/RegisterValidation.js";
+import { User } from "../entities/user.js";
+import { UpdateUserInfoValidation } from "../Validations/UpdateUserInfo.js";
+import { UserPrisma } from "./user.js";
 
 export const resUserPrisma: UserPrisma = {
   findAll: async function (): Promise<User[]> {

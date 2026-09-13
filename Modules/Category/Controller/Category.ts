@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { addNewCategory, UpdateCategory } from "../Validations/Category";
-import { db } from "../../../src/prisma/db";
+import { addNewCategory, UpdateCategory } from "../Validations/Category.js";
+import { db } from "../../../src/prisma/db.js";
 
 /**
  * @route GET /api/categories
