@@ -1,7 +1,6 @@
 import "temporal-polyfill/full/global";
 
 import express, { Request, Response } from "express";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -15,8 +14,8 @@ import paymentRoute from "./Modules/Payment/Routes/Payment.js";
 
 import { errorHandler, notFound } from "./middlewares/err.js";
 import { db } from "./src/prisma/db.js";
+import { env } from "./config/env.js";
 
-dotenv.config();
 
 const app = express();
 
@@ -80,7 +79,7 @@ app.use(notFound);
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 async function startServer() {
   try {

@@ -8,7 +8,7 @@
     "prebuild": "pnpm install --frozen-lockfile --prod=false",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node index.ts",
+    "dev": "tsx watch index.ts",
     "watch": "tsx watch index.ts",
     "contract:emit": "prisma contract emit",
     "seed": "tsx src/prisma/seed.ts"
