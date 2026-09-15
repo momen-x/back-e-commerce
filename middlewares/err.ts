@@ -1,4 +1,5 @@
 import { NextFunction, Response, Request } from "express";
+import { AppError } from "../utils/AppError.js";
 
 export const notFound = (req: Request, res: Response, next: NextFunction) => {
   const err = new Error(`Not Found - ${req.originalUrl}`);
@@ -14,6 +15,12 @@ export const errorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json(
+      err.shape === "string" ? err.message : { [err.shape]: err.message },
+    );
+    return;
+  }
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
 
   res.status(statusCode).json({

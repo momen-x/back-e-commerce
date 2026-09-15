@@ -1,16 +1,17 @@
 import cloudinary from "cloudinary";
-import dotenv from "dotenv";
-dotenv.config();
+import type { UploadApiResponse } from "cloudinary";
+import { env } from "../config/env.js";
+import type { ImageInput } from "./image.js";
 
 cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: env.CLOUDINARY_CLOUD_NAME,
+  api_key: env.CLOUDINARY_API_KEY,
+  api_secret: env.CLOUDINARY_API_SECRET,
 });
 
 // export default cloudinary;
-export const uploadImage = async (file: Express.Multer.File) => {
-  return new Promise((resolve, reject) => {
+export const uploadImage = async (file: ImageInput) => {
+  return new Promise<UploadApiResponse | undefined>((resolve, reject) => {
     cloudinary.v2.uploader
       .upload_stream(
         {

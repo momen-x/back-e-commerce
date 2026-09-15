@@ -1,7 +1,6 @@
 import { NextFunction,Response,Request } from 'express';
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import { env } from "../config/env.js";
 
 
 export const VeriFyToken=(req:Request,res:Response,next:NextFunction)=>{
@@ -11,7 +10,7 @@ export const VeriFyToken=(req:Request,res:Response,next:NextFunction)=>{
         return;
     }
     try {
-        const decoded = jwt.verify(authToken as string, process.env.JWT_SECRET_KEY as string);
+        const decoded = jwt.verify(authToken as string, env.JWT_SECRET_KEY as string);
         (req as any).user = decoded;
         next();
     } catch (err) {
