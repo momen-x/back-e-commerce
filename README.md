@@ -49,37 +49,93 @@ Local imports in TypeScript source use **`.js` extensions** so the compiled appl
 
 See [docs/architecture.md](docs/architecture.md) for more detail.
 
-## Project structure
+## Project Structure
+
+The project follows a modular architecture where each feature owns its
+controllers, routes, services, repositories, validation schemas, entities,
+and types.
 
 ```text
-Modules/
-  Category/                  # Reference module; dependency wiring is in Routes/
-  Products/
-  User/
-    Auth/
-  Order/
-  Order_Items/
-  Payment/
-config/
-  env.ts                     # Environment validation
-middlewares/                 # Authentication, uploads, validation, and errors
-utils/                       # Cloudinary adapter, image input, and AppError
-src/prisma/
-  contract.prisma            # Database contract source
-  contract.json              # Generated runtime contract
-  contract.d.ts              # Generated contract types
-  db.ts                      # Shared Prisma runtime
-  seed.ts                    # Currently commented out
-migrations/                  # Prisma migration history and snapshots
-tests/
-  architecture.test.mjs      # Regression tests against compiled ESM
-docs/
-  architecture.md
-index.ts                     # Express app, route mounting, and startup
-prisma.config.ts
-tsconfig.json
-```
+.
+├── Modules/
+│   ├── Category/
+│   │   ├── controller/
+│   │   ├── routes/
+│   │   ├── service/
+│   │   ├── repo/
+│   │   ├── entities/
+│   │   ├── types/
+│   │   ├── validations/
+│   │   └── category.module.ts
+│   │
+│   ├── Products/
+│   │   ├── controller/
+│   │   │   └── product.controller.ts
+│   │   ├── routes/
+│   │   │   └── product.routes.ts
+│   │   ├── service/
+│   │   │   └── product.service.ts
+│   │   ├── repo/
+│   │   │   ├── product.repository.ts
+│   │   │   └── product.repository.types.ts
+│   │   ├── entities/
+│   │   │   └── product.entity.ts
+│   │   ├── types/
+│   │   │   └── product.types.ts
+│   │   ├── validations/
+│   │   │   └── product.validation.ts
+│   │   └── product.module.ts
+│   │
+│   ├── User/
+│   │   ├── Auth/
+│   │   ├── controller/
+│   │   ├── routes/
+│   │   ├── service/
+│   │   ├── repo/
+│   │   ├── entities/
+│   │   ├── types/
+│   │   ├── validations/
+│   │   └── user.module.ts
+│   │
+│   ├── Order/
+│   ├── OrderItems/
+│   └── Payment/
+│
+├── config/
+│   └── env.ts
+│
+├── middlewares/
+│   ├── auth/
+│   ├── upload/
+│   ├── validation/
+│   └── error/
+│
+├── utils/
+│   ├── cloudinary/
+│   ├── image/
+│   └── errors/
+│
+├── src/
+│   └── prisma/
+│       ├── contract.prisma
+│       ├── contract.json
+│       ├── contract.d.ts
+│       ├── db.ts
+│       └── seed.ts
+│
+├── migrations/
+├── tests/
+│   └── architecture.test.mjs
+│
+├── docs/
+│   └── architecture.md
+│
+├── index.ts
+├── prisma.config.ts
+├── package.json
+└── tsconfig.json
 
+```
 For example, Products contains:
 
 ```text
