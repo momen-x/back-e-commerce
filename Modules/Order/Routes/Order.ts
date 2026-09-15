@@ -2,14 +2,7 @@ import express from "express";
 
 import { verifyAdmin, VeriFyToken } from "../../../middlewares/verifyToken.js";
 
-import {
-  addOrder,
-  deleteOrder,
-  getLastOrder,
-  getOrderById,
-  getOrders,
-  getUserOrders,
-} from "../Controller/Order.js";
+import { orderController } from "../order.module.js";
 
 const router = express.Router();
 
@@ -18,41 +11,41 @@ const router = express.Router();
  * @description Get all orders
  * @access Private - Admin only
  */
-router.get("/", verifyAdmin, getOrders);
+router.get("/", verifyAdmin, orderController.getOrders);
 
 /**
  * @route POST /api/orders
  * @description Create a new order
  * @access Private - Logged in user
  */
-router.post("/", VeriFyToken, addOrder);
+router.post("/", VeriFyToken, orderController.addOrder);
 
 /**
  * @route GET /api/orders/last-order
  * @description Get the last order for the logged in user
  * @access Private - Logged in user
  */
-router.get("/last-order", VeriFyToken, getLastOrder);
+router.get("/last-order", VeriFyToken, orderController.getLastOrder);
 
 /**
  * @route GET /api/orders/user-orders
  * @description Get all orders for the logged in user
  * @access Private - Logged in user
  */
-router.get("/user-orders", VeriFyToken, getUserOrders);
+router.get("/user-orders", VeriFyToken, orderController.getUserOrders);
 
 /**
  * @route GET /api/orders/:id
  * @description Get order by id
  * @access Private - Order owner or admin
  */
-router.get("/:id", VeriFyToken, getOrderById);
+router.get("/:id", VeriFyToken, orderController.getOrderById);
 
 /**
  * @route DELETE /api/orders/:id
  * @description Delete order by id
  * @access Private - Order owner or admin
  */
-router.delete("/:id", VeriFyToken, deleteOrder);
+router.delete("/:id", VeriFyToken, orderController.deleteOrder);
 
 export default router;
