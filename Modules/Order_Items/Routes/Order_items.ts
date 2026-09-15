@@ -2,24 +2,18 @@ import express from "express";
 import {
   verifyAdmin,
   verifyTokenAndAuthorization,
-  VeriFyToken
+  VeriFyToken,
 } from "../../../middlewares/verifyToken.js";
-import {
-  getAllOrderItems,
-  getOrderItemsById,
-  addNewOrderItems,
-  deleteOrderItem,
-  UpdateOrderItems,
-} from "../Controller/order_items.js";
+import { orderItemController } from "../order_items.module.js";
 const router = express.Router();
 
 router
   .route("/")
-  .get(verifyAdmin, getAllOrderItems)
-  .post(VeriFyToken, addNewOrderItems);
+  .get(verifyAdmin, orderItemController.getAllOrderItems)
+  .post(VeriFyToken, orderItemController.addNewOrderItems);
 router
   .route("/:id")
-  .get(verifyTokenAndAuthorization, getOrderItemsById)
-  .put(verifyTokenAndAuthorization, UpdateOrderItems)
-  .delete(verifyTokenAndAuthorization, deleteOrderItem);
+  .get(verifyTokenAndAuthorization, orderItemController.getOrderItemsById)
+  .put(verifyTokenAndAuthorization, orderItemController.UpdateOrderItems)
+  .delete(verifyTokenAndAuthorization, orderItemController.deleteOrderItem);
 export default router;

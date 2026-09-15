@@ -1,6 +1,5 @@
 import z from "zod";
 
-
 export const orderItemsSchema = z.object({
   orderId: z.coerce.number().int().positive(),
 
@@ -12,5 +11,3 @@ export const orderItemsSchema = z.object({
 });
 
 export const updateOrderItemsSchema = orderItemsSchema.partial();
-
-
