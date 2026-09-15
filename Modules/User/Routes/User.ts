@@ -4,32 +4,26 @@ import {
   verifyTokenAndAuthorization,
   VeriFyToken,
 } from "../../../middlewares/verifyToken.js";
-import {
-  addProfileImage,
-  changePassword,
-  deleteUser,
-  getAllUsers,
-  getUserById,
-  getMe,
-  updateUserInfo,
-} from "../Controller/User.js";
+import { userController } from "../user.module.js";
 import { upload } from "../../../middlewares/photoUpload.js";
 const router = express.Router();
 
 router
   .route("/")
-  .get(verifyAdmin, getAllUsers)
-  .put(VeriFyToken, updateUserInfo);
-router.route("/password/change-password").put(VeriFyToken, changePassword);
-router.route("/me").get(VeriFyToken, getMe);
+  .get(verifyAdmin, userController.getAllUsers)
+  .put(VeriFyToken, userController.updateUserInfo);
+router
+  .route("/password/change-password")
+  .put(VeriFyToken, userController.changePassword);
+router.route("/me").get(VeriFyToken, userController.getMe);
 
 router
   .route("/:id")
-  .get(verifyTokenAndAuthorization, getUserById)
-  .delete(verifyTokenAndAuthorization, deleteUser);
+  .get(verifyTokenAndAuthorization, userController.getUserById)
+  .delete(verifyTokenAndAuthorization, userController.deleteUser);
 
 router
   .route("/photo-upload")
-  .post(VeriFyToken, upload.single("image"), addProfileImage);
+  .post(VeriFyToken, upload.single("image"), userController.addProfileImage);
 
 export default router;
