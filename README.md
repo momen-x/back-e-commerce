@@ -1,307 +1,265 @@
-# 🚀 E-Commerce Backend API
+# E-Commerce Backend API
 
-A robust, scalable, and secure RESTful API built with **Express.js**, **TypeScript**, and **Prisma ORM**. This backend powers modern e-commerce applications with complete authentication, product management, order processing, and payment integration.
+An Express 5 and TypeScript REST API backed by PostgreSQL and Prisma 8 (Prisma Next). The backend provides product and category management, user profiles, cookie-based JWT authentication, orders, and Stripe payment intents.
 
-## ✨ Features
+## Stack
 
-### 🔐 Authentication & Authorization
+- **Runtime:** Node.js with ESM and TypeScript 5.9
+- **HTTP:** Express 5, cookie-parser, and CORS
+- **Database:** PostgreSQL with `@prisma/orm-postgres` 8.0.0-rc.9 and Prisma CLI 8.0.0-rc.10
+- **Validation:** Zod
+- **Authentication:** bcryptjs and jsonwebtoken
+- **Images:** Multer and Cloudinary
+- **Payments:** Stripe
+- **Tests:** Node.js test runner
+- **Package manager:** pnpm 10.28.2
 
-- **JWT Authentication** - Secure token-based authentication
-- **Role-based Access** - Admin, Vendor, Customer roles
-- **OAuth2 Integration** - Google, Facebook login
-- **Email Verification** - Account confirmation
-- **Password Reset** - Secure password recovery
-- **Refresh Tokens** - Seamless token rotation
+## Implemented features
 
-### 📦 Product Management
+- Product CRUD, pagination, category filtering, and image uploads/replacement.
+- Category CRUD with admin-only writes.
+- User profiles, profile images, password changes, and admin account deletion protection.
+- Registration, login, logout, and an email-verification endpoint.
+- Order creation with totals calculated from stored product prices, transactional order/item writes, order history, and owner/admin checks for order retrieval and deletion.
+- Order-item CRUD with product and order relation checks.
+- Stripe payment-intent creation and an endpoint that marks an order paid and changes its status to `processing`.
 
-- **CRUD Operations** - Full product lifecycle management
-- **Categories & Subcategories** - Hierarchical organization
-- **Inventory Tracking** - Real-time stock management
-- **Product Variants** - Size, color, options
-- **Reviews & Ratings** - Customer feedback system
-- **Search & Filtering** - Advanced product discovery
-- **Bulk Operations** - Import/export products
+## Architecture
 
-### 🛒 Shopping Cart
+The modules follow the Category reference implementation:
 
-- **Persistent Cart** - Save cart for logged-in users
-- **Guest Cart** - Temporary cart for non-logged users
-- **Cart Merging** - Merge guest cart on login
-- **Price Calculations** - Subtotal, tax, shipping, discounts
-- **Coupon System** - Percentage and fixed discounts
+```text
+Route -> Controller -> Service -> Repository contract -> Prisma repository -> Database
+```
 
-### 📋 Order Management
+| Layer | Responsibility |
+| --- | --- |
+| Routes | Endpoint paths, authorization middleware, uploads, and controller handlers |
+| Controllers | Request parsing, existing Zod validation, HTTP status codes, responses, and service calls |
+| Services | Business rules, repository calls, password hashing, JWT generation, and external API calls |
+| Repository contracts | Typed persistence operations required by services |
+| Prisma repositories | Database queries, mutations, and transactions |
+| Module wiring | Construct repositories, services, and controller instances |
 
-- **Order Processing** - Create, update, track orders
-- **Multiple Statuses** - Pending, Processing, Shipped, Delivered, Cancelled
-- **Payment Integration** - Stripe, PayPal, COD
-- **Invoice Generation** - PDF invoices
-- **Email Notifications** - Order confirmations, updates
-- **Refund Processing** - Full/partial refunds
+Controllers use class-based arrow-function handlers. Services have no Express or direct database dependencies. Cloudinary calls stay in the Product and User services; Stripe calls stay in PaymentService. Payment state is stored on the existing Order model.
 
-### 👥 User Management
+Services throw `AppError` for business failures. The global error handler preserves each endpoint's existing error body, which may use `message`, `error`, or a JSON string.
 
-- **Profile Management** - Update personal info
-- **Address Book** - Multiple shipping addresses
-- **Order History** - View past purchases
-- **Wishlist** - Save favorite items
-- **Password Management** - Change/forgot password
+Local imports in TypeScript source use **`.js` extensions** so the compiled application runs as ESM on Node.js and Render. Reusable input types live under `types/`; update types exclude Prisma relation callbacks to avoid incompatible create/update types and `never` errors.
 
-### 👑 Admin Dashboard API
+See [docs/architecture.md](docs/architecture.md) for more detail.
 
-- **Dashboard Stats** - Sales, revenue, users, orders
-- **User Management** - CRUD operations for users
-- **Product Management** - Approve/reject products
-- **Order Management** - Update order status
-- **Discount Management** - Create/manage coupons
-- **Analytics** - Sales reports and charts data
+## Project structure
 
-### 🛡️ Security Features
+```text
+Modules/
+  Category/                  # Reference module; dependency wiring is in Routes/
+  Products/
+  User/
+    Auth/
+  Order/
+  Order_Items/
+  Payment/
+config/
+  env.ts                     # Environment validation
+middlewares/                 # Authentication, uploads, validation, and errors
+utils/                       # Cloudinary adapter, image input, and AppError
+src/prisma/
+  contract.prisma            # Database contract source
+  contract.json              # Generated runtime contract
+  contract.d.ts              # Generated contract types
+  db.ts                      # Shared Prisma runtime
+  seed.ts                    # Currently commented out
+migrations/                  # Prisma migration history and snapshots
+tests/
+  architecture.test.mjs      # Regression tests against compiled ESM
+docs/
+  architecture.md
+index.ts                     # Express app, route mounting, and startup
+prisma.config.ts
+tsconfig.json
+```
 
-- **Helmet.js** - Secure HTTP headers
-- **CORS** - Controlled cross-origin requests
-- **Rate Limiting** - Prevent brute force attacks
-- **Input Validation** - Sanitize user input
-- **SQL Injection Prevention** - Parameterized queries
-- **XSS Protection** - Escape user input
-- **CSRF Protection** - Cross-site request forgery prevention
+For example, Products contains:
 
-### 📊 Performance
+```text
+Modules/Products/
+  Controller/Product.ts
+  Routes/Products.ts
+  service/product.ts
+  repo/product-type-repo.ts
+  repo/product.ts
+  entities/product.ts
+  types/product.ts
+  Validations/Product.ts
+  product.module.ts
+```
 
-- **Caching** - Redis for frequently accessed data
-- **Pagination** - Efficient data retrieval
-- **Compression** - Gzip compression
-- **Database Indexing** - Optimized queries
-- **Lazy Loading** - Efficient relation loading
+## Local setup
 
-## 🏗️ Tech Stack
+### 1. Prerequisites and dependencies
 
-### Core
+Use Node.js **22.18.0 or newer** (required by the installed Prisma CLI), pnpm **10.28.2**, and PostgreSQL **15 or newer**. Configure Cloudinary and Stripe credentials for their respective integrations.
 
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **Prisma ORM** - Database toolkit
-- **PostgreSQL/MySQL** - Database
+From the repository root:
 
-### Authentication
+```sh
+pnpm install --frozen-lockfile
+```
 
-- **JWT** - JSON Web Tokens
-- **bcrypt** - Password hashing
-- **Passport.js** - OAuth strategies
+### 2. Configure the environment
 
-### Validation
+Create `.env` in the repository root using the template below. The existing `.env.example` contains only the database URL; the application also requires the other values validated in [config/env.ts](config/env.ts).
 
-- **Zod** - Schema validation
-- **express-validator** - Request validation
-
-### File Upload
-
-- **Multer** - File handling
-- **Cloudinary** - Cloud storage
-- **Sharp** - Image optimization
-
-### Security
-
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-- **express-rate-limit** - Rate limiting
-- **express-mongo-sanitize** - NoSQL injection prevention
-
-### Utilities
-
-- **Winston** - Logging
-- **Morgan** - HTTP request logging
-- **Nodemailer** - Email sending
-- **Bull** - Queue management
-- **Redis** - Caching
-- **Stripe SDK** - Payment processing
-
-### Testing
-
-- **Jest** - Unit testing
-- **Supertest** - API testing
-- **Postman** - Manual testing
-
-## 📁 Project Structure
-
-ecommerce-backend/
-ecommerce-backend/
-├── src/
-│   ├── Modules/
-│   │   ├── Products/
-│   │   │   ├── Controllers/
-│   │   │   ├── Routes/
-│   │   │   ├── Validation/
-│   │   │   └── Models/
-│   │   │
-│   │   ├── Payment/
-│   │   │   ├── Controllers/
-│   │   │   ├── Routes/
-│   │   │   ├── Validation/
-│   │   │   └── Models/
-│   │   │
-│   │   ├── Categories/
-│   │   │   ├── Controllers/
-│   │   │   ├── Routes/
-│   │   │   ├── Validation/
-│   │   │   └── Models/
-│   │   │
-│   │   ├── Orders/
-│   │   │   ├── Controllers/
-│   │   │   ├── Routes/
-│   │   │   ├── Validation/
-│   │   │   └── Models/
-│   │   │
-│   │   ├── Order_Items/
-│   │   │   ├── Controllers/
-│   │   │   ├── Routes/
-│   │   │   ├── Validation/
-│   │   │   └── Models/
-│   │   │
-│   │   └── Users/
-│   │       ├── Controllers/
-│   │       ├── Routes/
-│   │       ├── Validation/
-│   │       └── Models/
-│   │       ├── Auth/
-│   │       │   ├── Controllers/
-│   │       │   ├── Routes/
-│   │       │   ├── Validation/
-│   │       │   
-│   │       │
-│   │       ├── Controllers/
-│   │       ├── Routes/
-│   │       ├── Validation/
-│   │       └── Module/
-│   │
-│   ├── config/
-│   ├── middleware/
-│   ├── utils/
-│   ├── constants/
-│   └── types/
-│
-├── index.ts
-│
-├── prisma/
-│   └── schema.prisma
-├── .env
-├── .gitignore
-├── package.json
-├── tsconfig.json
-└── server.ts
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL/MySQL
-- Redis (optional)
-- npm/yarn/pnpm
-
-### Installation
-
-1. **Clone the repository**
-
-## bash
-
-git clone https://github.com/momen-x/back-e-commerce.git
-
-### Install dependencies
-
-## npm install
-
-# or
-
-yarn install
-
-# or
-
-## pnpm install
-
-## Set up environment variables
-
-# cp .env.example .env
-
-# Server
-
-PORT=5000
+```dotenv
 NODE_ENV=development
+PORT=5000
 
-# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/ecommerce
+JWT_SECRET_KEY=replace-with-a-random-secret-at-least-32-characters-long
 
-DATABASE_URL="postgresql://user:password@localhost:5432/ecommerce"
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 
-# JWT
+STRIPE_SECRET_KEY=your-stripe-secret-key
+BASE_FRONT_URL=http://localhost:5173
+EMAIL_USER=your-email-account
+EMAIL_PASS=your-email-password
+```
 
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRE=7d
-REFRESH_TOKEN_SECRET=your_refresh_token_secret
+`NODE_ENV` defaults to `development` and `PORT` defaults to `5000`. All other variables shown above are required. `JWT_SECRET_KEY` must contain at least 32 characters, and `BASE_FRONT_URL` must be a valid URL. Email settings are required by the configuration even though the current registration flow does not send email.
 
-# OAuth
+### 3. Prepare PostgreSQL
 
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-FACEBOOK_APP_ID=your_facebook_app_id
-FACEBOOK_APP_SECRET=your_facebook_app_secret
+This project uses Prisma 8's contract workflow. Its schema source is [src/prisma/contract.prisma](src/prisma/contract.prisma), and generated artifacts are checked in.
 
-# Email
+For a **new, empty development database**, create the database, set `DATABASE_URL`, then initialize it from the contract:
 
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
+```sh
+pnpm contract:emit
+pnpm exec prisma db init
+pnpm exec prisma db verify
+```
 
-# Payment
+For an existing database, use the project's migration history and verify the schema rather than initializing it as an empty database. Re-emit the contract after schema changes; generated `contract.json` and `contract.d.ts` files should not be edited manually.
 
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+### 4. Start development
 
-# Cloud Storage
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Redis
-
-REDIS_URL=redis://localhost:6379
-
-# Frontend URL
-
-FRONTEND_URL=http://localhost:3000
-
-## Set up database
-
-# Run Prisma migrations
-
-npx prisma migrate dev --name init
-
-# Generate Prisma client
-
-npx prisma generate
-
-# Seed database (optional)
-
-npm run seed
-
-# Start development server
-
-npm run dev
-
-# or
-
-yarn dev
-
-# or
-
+```sh
 pnpm dev
+```
 
-### Build for production
+The server connects to PostgreSQL before listening. With the default port, the API is available at `http://localhost:5000`. `GET /` returns `hello world`.
 
-npm run build
-npm start
+## API endpoints
+
+### Authentication and users
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/users/auth/register` | Register a user |
+| POST | `/api/users/auth/login` | Log in and set the token cookie |
+| GET | `/api/users/auth/logout` | Clear the token cookie |
+| GET | `/api/users/auth/verify/:token` | Verify an email token |
+| GET | `/api/users` | List users; admin only |
+| PUT | `/api/users` | Update the logged-in user's name |
+| GET | `/api/users/me` | Read the logged-in user's profile |
+| GET | `/api/users/:id` | Read a user through the shared ID authorization guard |
+| DELETE | `/api/users/:id` | Delete a user through the shared ID authorization guard |
+| PUT | `/api/users/password/change-password` | Change the logged-in user's password |
+| POST | `/api/users/photo-upload` | Upload a profile image |
+
+### Products and categories
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/products` | List products; accepts `page` and `limit` |
+| POST | `/api/products` | Create a product; admin only |
+| GET | `/api/products/count` | Get product/page counts; accepts `limit` |
+| GET | `/api/products/categories/:categoryId` | Filter products by category; accepts `page` and `limit` |
+| GET | `/api/products/:id` | Read a product |
+| PUT | `/api/products/:id` | Update a product; admin only |
+| DELETE | `/api/products/:id` | Delete a product; admin only |
+| GET | `/api/categories` | List categories |
+| POST | `/api/categories` | Create a category; admin only |
+| GET | `/api/categories/:id` | Read a category |
+| PUT | `/api/categories/:id` | Update a category; admin only |
+| DELETE | `/api/categories/:id` | Delete a category; admin only |
+
+Product pagination defaults to page `1` and limit `8`. Product and profile image uploads use `multipart/form-data` with a single file field named `image`.
+
+### Orders and payments
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/orders` | List orders; admin only |
+| POST | `/api/orders` | Create an order for the logged-in user |
+| GET | `/api/orders/last-order` | Read the logged-in user's latest order |
+| GET | `/api/orders/user-orders` | List the logged-in user's orders |
+| GET | `/api/orders/:id` | Read an order; owner or admin |
+| DELETE | `/api/orders/:id` | Delete an order; owner or admin |
+| GET | `/api/order-items` | List order items; admin only |
+| POST | `/api/order-items` | Create an order item; login required |
+| GET | `/api/order-items/:id` | Read an order item through the shared ID authorization guard |
+| PUT | `/api/order-items/:id` | Update an order item through the shared ID authorization guard |
+| DELETE | `/api/order-items/:id` | Delete an order item through the shared ID authorization guard |
+| POST | `/api/payment/create-payment-intent` | Create a Stripe intent from an order's total; login required |
+| POST | `/api/payment/confirm` | Mark an order paid; login required |
+
+Both payment endpoints accept `{ "orderId": 1 }`. Payment-intent creation returns `{ "clientSecret": "..." }` and uses USD with the order total converted to cents.
+
+## Authentication and frontend integration
+
+Authentication middleware reads the JWT from the **`token` cookie**. Login creates a token valid for five days and a matching HTTP-only cookie. In production, the cookie uses `secure: true` and `sameSite: "none"`; otherwise it uses `secure: false` and `sameSite: "lax"`.
+
+Browser requests to authenticated endpoints must include credentials, for example `fetch(url, { credentials: "include" })`. The current CORS allowlist in [index.ts](index.ts) contains:
+
+- `http://localhost:5173`
+- `https://front-e-commarce.vercel.app`
+
+Setting `BASE_FRONT_URL` does not change that allowlist.
+
+The shared `verifyTokenAndAuthorization` middleware permits admins or a strict match between the token's user ID and the route's `:id`. It does not look up order-item ownership. Order endpoints perform their own owner/admin checks in OrderService.
+
+## Current behavior and limitations
+
+- Registration currently creates users with `emailVerified: true`. Verification tokens are stored, but registration and the resend branch do not send email.
+- Password-reset routes are commented out. Refresh-token handling and OAuth login are not implemented.
+- Payment confirmation directly updates the order. It does not verify a Stripe payment result, and there is no Stripe webhook endpoint.
+- Category-filtered product responses report the count and page count across all products.
+- Standalone order-item changes do not recalculate order totals.
+- The seed script is currently commented out, so `pnpm seed` does not populate the database.
+
+## Build, test, and deploy
+
+### Production build
+
+```sh
+pnpm build
+pnpm start
+```
+
+`pnpm build` first runs `pnpm install --frozen-lockfile --prod=false`, then compiles TypeScript into `dist/`. `pnpm start` runs `node dist/index.js`.
+
+### Regression tests
+
+```sh
+pnpm build
+node --test tests/architecture.test.mjs
+```
+
+Tests cover service behavior, error response shapes, image replacement, authentication, order totals and access rules, transaction failure propagation, payment state, route paths, middleware order, and dependency wiring. They use compiled ESM with test doubles and do not contact PostgreSQL, Cloudinary, or Stripe. Live integration testing requires a separate configured environment.
+
+### Render
+
+Configure a Node web service with:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `pnpm build` |
+| Start command | `pnpm start` |
+| Runtime | Node.js 22.18.0 or newer |
+| Environment | `NODE_ENV=production` plus the required variables above |
+
+The server reads Render's `PORT` environment variable. Apply reviewed database migrations separately; building and starting the service do not apply migrations. Keep the generated Prisma contract artifacts in the deployment and preserve `.js` extensions in local imports.
