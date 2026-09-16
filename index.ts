@@ -16,16 +16,12 @@ import { errorHandler, notFound } from "./middlewares/err.js";
 import { db } from "./src/prisma/db.js";
 import { env } from "./config/env.js";
 
-
 const app = express();
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "https://front-e-commarce.vercel.app",
-        "http://localhost:5173",
-      ];
+      const allowedOrigins = [env.BASE_FRONT_URL];
 
       if (!origin) {
         return callback(null, true);
