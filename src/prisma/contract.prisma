@@ -71,11 +71,7 @@ model Order {
   id                          Int         @id @default(autoincrement())
 
   userId                      Int
-  user                        User        @relation(
-    fields: [userId],
-    references: [id],
-    onDelete: Restrict
-  )
+  user                        User        @relation(fields: [userId],references: [id],onDelete: Restrict)
 
   phone                       VarChar(30)
   address                     String
