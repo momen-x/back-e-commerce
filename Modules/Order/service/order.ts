@@ -5,6 +5,7 @@ import type {
   OrderCreateInput,
 } from "../types/order.js";
 import { AppError } from "../../../utils/AppError.js";
+import { updateOrderData } from "../Validations/update-order.js";
 
 export class OrderService {
   constructor(private readonly repository: OrderRepository) {}
@@ -23,6 +24,15 @@ export class OrderService {
   }
   async getByUser(userId: number) {
     return this.repository.findByUserId(userId);
+  }
+  async getCart(userId: number) {
+    const order = await this.repository.findCartByUserId(userId);
+    if (!order) return null;
+    return order;
+  }
+  async getCartCount(userId: number) {
+    const order = await this.repository.findCartByUserId(userId);
+    return order?.orderItems.length || 0;
   }
   async create(
     userId: number,
@@ -43,7 +53,7 @@ export class OrderService {
       (total, item) => total + Number(item.product!.price) * item.quantity,
       0,
     );
-    return this.repository.createWithItems({
+    return this.repository.create({
       order: {
         userId,
         address,
@@ -51,11 +61,6 @@ export class OrderService {
         phone: phone as OrderCreateInput["phone"],
         totalPrice: totalPrice as unknown as OrderCreateInput["totalPrice"],
       },
-      items: products.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.product!.price,
-      })),
     });
   }
   async delete(id: number, actor: OrderActor) {
@@ -64,5 +69,8 @@ export class OrderService {
     if (order.userId !== Number(actor.id) && !actor.isAdmin)
       throw new AppError(403, "you are not authorized to delete this order");
     await this.repository.delete(id);
+  }
+  async update(id: number, data: updateOrderData) {
+    return this.repository.update(id, data);
   }
 }
