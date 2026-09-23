@@ -7,9 +7,5 @@ export type OrderItemUpdateInput = Partial<
 >;
 
 import type { z } from "zod";
-import type {
-  orderItemsSchema,
-  updateOrderItemsSchema,
-} from "../Validations/Order_items.js";
+import type { orderItemsSchema } from "../Validations/Order_items.js";
 export type AddOrderItemInput = z.infer<typeof orderItemsSchema>;
-export type EditOrderItemInput = z.infer<typeof updateOrderItemsSchema>;

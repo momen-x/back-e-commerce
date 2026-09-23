@@ -25,6 +25,12 @@ export class PrismaOrderItemRepository extends OrderItemRepository {
   async findOrderById(id: number) {
     return db.orm.public.Order.where({ id }).first();
   }
+  async findByOrderAndProduct(orderId: number, productId: number) {
+    return db.orm.public.OrderItem.where({
+      orderId,
+      productId,
+    }).first();
+  }
   async create(data: OrderItemCreateInput) {
     return db.orm.public.OrderItem.create(data);
   }

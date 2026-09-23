@@ -12,8 +12,10 @@ router
   .get(verifyAdmin, orderItemController.getAllOrderItems)
   .post(VeriFyToken, orderItemController.addNewOrderItems);
 router
+  .route("/orders/:orderId")
+  .get(verifyTokenAndAuthorization, orderItemController.getOrderItemsByOrderId);
+router
   .route("/:id")
   .get(verifyTokenAndAuthorization, orderItemController.getOrderItemsById)
-  .put(verifyTokenAndAuthorization, orderItemController.UpdateOrderItems)
   .delete(verifyTokenAndAuthorization, orderItemController.deleteOrderItem);
 export default router;
