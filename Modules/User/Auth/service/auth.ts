@@ -9,6 +9,7 @@ import type {
   LoginInput,
 } from "../types/auth.js";
 import { AppError } from "../../../../utils/AppError.js";
+import { defaultImage } from "../../utils/constance.js";
 
 export class AuthService {
   constructor(private readonly repository: AuthRepository) {}
@@ -30,8 +31,7 @@ export class AuthService {
       password: hashedPassword,
       firstName: firstName as AuthCreateInput["firstName"],
       lastName: lastName as AuthCreateInput["lastName"],
-      userImageUrl:
-        "https://cdn.pixabay.com/photo/2017/11/10/05/48/user-2935527_1280.png",
+      userImageUrl: defaultImage,
       userImagePublicId: null,
       emailVerificationToken: token,
       emailVerificationExpires: expiresAt,

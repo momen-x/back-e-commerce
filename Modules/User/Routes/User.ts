@@ -15,15 +15,18 @@ router
 router
   .route("/password/change-password")
   .put(VeriFyToken, userController.changePassword);
-router.route("/me").get(VeriFyToken, userController.getMe);
 
-router
-  .route("/:id")
-  .get(verifyTokenAndAuthorization, userController.getUserById)
-  .delete(verifyTokenAndAuthorization, userController.deleteUser);
+router.route("/me").get(VeriFyToken, userController.getMe);
 
 router
   .route("/photo-upload")
   .post(VeriFyToken, upload.single("image"), userController.addProfileImage);
+router
+  .route("/photo-delete")
+  .delete(VeriFyToken, userController.deleteProfileImage);
+router
+  .route("/:id")
+  .get(verifyTokenAndAuthorization, userController.getUserById)
+  .delete(verifyTokenAndAuthorization, userController.deleteUser);
 
 export default router;

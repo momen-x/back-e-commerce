@@ -6,6 +6,7 @@ import type { UpdatePasswordType } from "../Auth/Validations/PasswordValidation.
 import type { ImageInput } from "../../../utils/image.js";
 import { uploadImage, removeImage } from "../../../utils/cloudinary.js";
 import { AppError } from "../../../utils/AppError.js";
+import { defaultImage } from "../utils/constance.js";
 
 export class UserService {
   constructor(private readonly repository: UserRepository) {}
@@ -75,6 +76,15 @@ export class UserService {
       public_id: updated.userImagePublicId || null,
       url: updated.userImageUrl,
     };
+  }
+  async deleteProfileImage(id: number) {
+    const user = await this.requireUser(id);
+    if (user.userImageUrl === defaultImage) return;
+    if (user.userImagePublicId) await removeImage(user.userImagePublicId);
+    await this.repository.update(id, {
+      userImageUrl: defaultImage,
+      userImagePublicId: null,
+    });
   }
   async delete(id: number) {
     const user = await this.requireUser(id);

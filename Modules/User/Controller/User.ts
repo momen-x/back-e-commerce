@@ -61,6 +61,10 @@ export class UserController {
       .status(200)
       .json({ message: "user image updated successfully", userImage });
   });
+  deleteProfileImage = asyncHandler(async (req, res) => {
+    await this.service.deleteProfileImage(Number((req as any).user.id));
+    res.status(200).json({ message: "user image deleted successfully" });
+  });
   deleteUser = asyncHandler(async (req, res) => {
     if (!req.params.id) {
       res.status(400).json({ error: "user id is required" });

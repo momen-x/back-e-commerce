@@ -9,18 +9,16 @@ export class AuthController {
   registerUser = asyncHandler(async (req, res) => {
     const validation = registerValidation.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({ error: validation.error.issues[0].message });
+      res.status(400).json({ message: validation.error.issues[0].message });
       return;
     }
     try {
       const { created } = await this.service.register(validation.data);
-      res
-        .status(created ? 201 : 200)
-        .json({
-          message: created
-            ? "User created successfully. Please check your email to verify your account."
-            : "Verification email resent. Please check your inbox.",
-        });
+      res.status(created ? 201 : 200).json({
+        message: created
+          ? "User created successfully. Please check your email to verify your account."
+          : "Verification email resent. Please check your inbox.",
+      });
     } catch (error) {
       if (error instanceof AppError) throw error;
       // Registration historically returns { error } for unexpected failures.
@@ -34,7 +32,7 @@ export class AuthController {
   loginUser = asyncHandler(async (req, res) => {
     const validation = loginValidation.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({ error: validation.error.issues[0].message });
+      res.status(400).json({ message: validation.error.issues[0].message });
       return;
     }
     const { token, user } = await this.service.login(validation.data);
