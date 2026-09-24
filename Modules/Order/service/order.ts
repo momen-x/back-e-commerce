@@ -73,4 +73,11 @@ export class OrderService {
   async update(id: number, data: updateOrderData) {
     return this.repository.update(id, data);
   }
+  async orderCompleted(userId: number) {
+    const order = await this.repository.findCartByUserId(userId);
+    if (!order) return;
+
+    const updateOrder = await this.repository.updateOrderStatus(order.id);
+    return updateOrder;
+  }
 }

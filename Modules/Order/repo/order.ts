@@ -28,6 +28,14 @@ export class PrismaOrderRepository extends OrderRepository {
 
     return order;
   }
+  async updateOrderStatus(id: number): Promise<Order> {
+    const order = await db.orm.public.Order.where({ id }).update({
+      status: "delivered",
+      isPaid: true,
+    });
+    if (!order) throw new Error("Order not found");
+    return order;
+  }
   async findAll() {
     return await db.orm.public.Order.include("orderItems")
       .include("user")
@@ -62,7 +70,7 @@ export class PrismaOrderRepository extends OrderRepository {
   }
 
   async findByUserId(userId: number) {
-    return await db.orm.public.Order.where({ userId })
+    return await db.orm.public.Order.where({ userId, status: "delivered" })
       .include("orderItems")
       .include("user")
       .orderBy((order) => order.createdAt.desc())

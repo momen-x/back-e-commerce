@@ -15,10 +15,10 @@ router.get("/", verifyAdmin, orderController.getOrders);
 
 /**
  * @route POST /api/orders
- * @description Create a new order
+ * @description Update order status
  * @access Private - Logged in user
  */
-// router.post("/", VeriFyToken, orderController.addOrder);
+router.post("/", VeriFyToken, orderController.updateOrderStatus);
 
 /**
  * @route GET /api/orders/last-order

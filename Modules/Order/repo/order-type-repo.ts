@@ -21,9 +21,7 @@ export abstract class OrderRepository {
   abstract findProductById(id: number): Promise<Product | null>;
   abstract create(data: OrderWithItemsInput): Promise<OrderWithRelations>;
   abstract updateTotalPrice(id: number, totalPrice: number): Promise<Order>;
-  abstract update(
-    id: number,
-    data: updateOrderData,
-  ): Promise<Order>;
+  abstract update(id: number, data: updateOrderData): Promise<Order>;
+  abstract updateOrderStatus(id: number): Promise<Order>;
   abstract delete(id: number): Promise<void>;
 }
