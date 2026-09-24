@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import type { OrderService } from "../service/order.js";
 import { OrderSchema } from "../Validations/Order.js";
+import { updateOrderDto } from "../Validations/update-order.js";
 
 export class OrderController {
   constructor(private readonly service: OrderService) {}
@@ -85,7 +86,7 @@ export class OrderController {
       res.status(400).json({ message: "id is required" });
       return;
     }
-    const validation = OrderSchema.safeParse(req.body);
+    const validation = updateOrderDto.safeParse(req.body);
     if (!validation.success) {
       res.status(400).json({ message: validation.error.issues[0].message });
       return;
