@@ -8,6 +8,9 @@ export type OrderWithRelations = Order & {
   orderItems: OrderItem[];
   user: User | null;
 };
+export type OrderWithItemProducts = OrderWithRelations & {
+  orderItems: (OrderItem & { product: Product | null })[];
+};
 export abstract class OrderRepository {
   abstract findAll(): Promise<OrderWithRelations[]>;
   abstract findById(id: number): Promise<Order | null>;
@@ -15,8 +18,8 @@ export abstract class OrderRepository {
     id: number,
   ): Promise<OrderWithRelations | null>;
   abstract findLastByUserId(userId: number): Promise<OrderWithRelations | null>;
-  abstract findByUserId(userId: number): Promise<OrderWithRelations[]>;
-  abstract findCartByUserId(userId: number): Promise<OrderWithRelations | null>;
+  abstract findByUserId(userId: number): Promise<OrderWithItemProducts[]>;
+  abstract findCartByUserId(userId: number): Promise<OrderWithItemProducts | null>;
   abstract findUserById(id: number): Promise<User | null>;
   abstract findProductById(id: number): Promise<Product | null>;
   abstract create(data: OrderWithItemsInput): Promise<OrderWithRelations>;

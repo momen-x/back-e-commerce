@@ -1,5 +1,5 @@
 import { db } from "../../../src/prisma/db.js";
-import { OrderRepository, OrderWithRelations } from "./order-type-repo.js";
+import { OrderRepository, OrderWithItemProducts } from "./order-type-repo.js";
 import type { OrderWithItemsInput } from "../types/order.js";
 import { Order } from "../entities/order.js";
 import { Numeric } from "@prisma/orm-postgres/target/codec-types";
@@ -57,21 +57,22 @@ export class PrismaOrderRepository extends OrderRepository {
       .orderBy((order) => order.createdAt.desc())
       .first();
   }
-  async findCartByUserId(userId: number): Promise<OrderWithRelations | null> {
+  async findCartByUserId(userId: number): Promise<OrderWithItemProducts | null> {
     return db.orm.public.Order.where({
       userId,
       isPaid: false,
       status: "pending",
     })
-      .include("orderItems")
+      .include("orderItems", (items) => items.include("product"))
       .include("user")
       .orderBy((order) => order.createdAt.desc())
       .first();
   }
+  
 
   async findByUserId(userId: number) {
     return await db.orm.public.Order.where({ userId, status: "delivered" })
-      .include("orderItems")
+      .include("orderItems", (items) => items.include("product"))
       .include("user")
       .orderBy((order) => order.createdAt.desc())
       .all();

@@ -5,6 +5,7 @@ import type {
 } from "../types/order_items.js";
 import { AppError } from "../../../utils/AppError.js";
 import { OrderRepository } from "../../Order/repo/order-type-repo.js";
+import type { Order } from "../../Order/entities/order.js";
 import { OrderWithItemsInput } from "../../Order/types/order.js";
 export class OrderItemService {
   constructor(
@@ -31,7 +32,7 @@ export class OrderItemService {
       throw new AppError(404, "Product not found");
     }
 
-    let order = await this.orderRepository.findCartByUserId(userId);
+    let order: Order | null = await this.orderRepository.findCartByUserId(userId);
 
     if (!order) {
       type OrderInput = OrderWithItemsInput["order"];
